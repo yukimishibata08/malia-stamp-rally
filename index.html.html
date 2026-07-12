@@ -1,0 +1,1044 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Malia おでかけスタンプラリー</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700;900&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jsQR/1.4.0/jsQR.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<style>
+:root{
+  --pink: #FF9868;
+  --pink-deep: #FF7A45;
+  --blue: #4FD5E3;
+  --blue-deep: #17AFC2;
+  --beige: #FFEFC4;
+  --cream: #FCFEFE;
+  --ink: #26363A;
+  --ink-soft: #6C7E80;
+  --gold: #FFC33D;
+  --white: #FFFFFF;
+  --shadow: 0 8px 24px rgba(38,54,58,0.10);
+  --radius: 20px;
+}
+*{box-sizing:border-box;}
+body{
+  margin:0;
+  font-family:'Zen Kaku Gothic New','Noto Sans JP',sans-serif;
+  background:linear-gradient(180deg,#FDFEFE 0%,#EAFBFB 45%,#E4F6E9 100%);
+  color:var(--ink);
+  min-height:100vh;
+}
+#app{max-width:480px;margin:0 auto;min-height:100vh;position:relative;padding-bottom:40px;}
+.screen{padding:20px 20px 10px;animation:fadeIn .35s ease;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:14px 20px;}
+.topbar .logo{font-weight:900;font-size:20px;letter-spacing:.5px;color:var(--pink-deep);}
+.topbar .sub{font-size:11px;color:var(--ink-soft);}
+
+.hero{
+  border-radius:0 0 0 0;
+  background:linear-gradient(150deg,#FFD9A0 0%, var(--pink) 45%, var(--blue) 100%);
+  padding:36px 24px 44px;
+  position:relative;
+  overflow:hidden;
+  color:#fff;
+}
+.hero-wave{position:absolute;left:0;right:0;bottom:-1px;width:100%;height:32px;display:block;}
+.hero-sun{position:absolute;top:-30px;right:-24px;width:130px;height:130px;border-radius:50%;background:radial-gradient(circle,#FFF3C9 0%,rgba(255,243,201,.4) 60%,rgba(255,243,201,0) 75%);}
+.hero-palm{position:absolute;left:-6px;bottom:20px;font-size:52px;opacity:.55;transform:scaleX(-1);filter:drop-shadow(0 4px 6px rgba(0,0,0,.08));}
+.hero-title{font-size:26px;font-weight:900;line-height:1.4;position:relative;z-index:2;text-shadow:0 2px 8px rgba(0,0,0,0.08);}
+.hero-badge{display:inline-block;background:rgba(255,255,255,0.6);color:var(--ink);font-size:12px;padding:4px 12px;border-radius:20px;margin-bottom:12px;font-weight:700;letter-spacing:.5px;position:relative;z-index:2;}
+.hero-desc{font-size:13.5px;margin-top:10px;opacity:.95;position:relative;z-index:2;}
+
+.card{
+  background:var(--white);
+  border-radius:var(--radius);
+  box-shadow:var(--shadow);
+  padding:20px;
+  margin:16px 0;
+}
+h2.section-title{font-size:16px;font-weight:700;margin:0 0 14px;color:var(--ink);display:flex;align-items:center;gap:6px;}
+
+.btn{
+  display:block;width:100%;text-align:center;
+  padding:16px;border:none;border-radius:16px;
+  font-size:16px;font-weight:700;cursor:pointer;
+  transition:transform .12s ease, box-shadow .12s ease;
+  font-family:inherit;
+}
+.btn:active{transform:scale(.97);}
+.btn-primary{background:linear-gradient(135deg,var(--pink-deep),var(--pink));color:#fff;box-shadow:0 6px 16px rgba(255,122,69,0.35);}
+.btn-secondary{background:var(--white);color:var(--pink-deep);border:2px solid var(--pink);}
+.btn-ghost{background:transparent;color:var(--ink-soft);font-weight:500;font-size:13px;padding:10px;}
+.btn-outline-blue{background:#fff;color:var(--blue-deep);border:2px solid var(--blue);}
+
+input[type=text],input[type=password],input[type=email],input[type=date],input[type=number],textarea,select{
+  width:100%;padding:14px;border-radius:12px;border:2px solid #EFE2DC;
+  font-size:15px;font-family:inherit;margin-bottom:12px;background:#fff;color:var(--ink);
+}
+input:focus,textarea:focus,select:focus{outline:none;border-color:var(--pink);}
+label{font-size:12.5px;color:var(--ink-soft);font-weight:700;display:block;margin-bottom:6px;}
+
+.stamp-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;}
+.stamp-slot{
+  aspect-ratio:1;border-radius:16px;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;font-size:12px;font-weight:700;
+  border:2px dashed #DCE9E9; color:#B8C4C4; background:#FBFEFE;position:relative;
+}
+.stamp-slot.filled{
+  border:2px solid #FFE3D2;
+  background:#FFFAF3;
+  color:var(--pink-deep);
+  box-shadow:0 4px 14px rgba(255,122,69,.25);
+}
+.stamp-slot .icon{display:block;margin-bottom:4px;color:inherit;}
+.stamp-slot .icon svg{display:block;margin:0 auto;}
+.icon-wrap.notgot svg{filter:grayscale(1) opacity(.4);}
+.icon-wrap.got svg{filter:drop-shadow(0 3px 6px rgba(38,54,58,.18));}
+
+.remain-banner{
+  text-align:center;padding:16px;border-radius:16px;font-weight:900;font-size:16px;
+  background:linear-gradient(135deg,#FFF3D0,#D6F7F5);color:var(--pink-deep);margin-top:16px;
+  border:2px solid var(--pink);
+}
+.remain-banner.final{
+  background:linear-gradient(135deg,#FFD873,#FF9868);
+  animation:pulse 1.4s infinite;font-size:17px;
+}
+@keyframes pulse{0%,100%{transform:scale(1);}50%{transform:scale(1.03);}}
+
+.store-row{display:flex;gap:12px;align-items:center;padding:12px;border-radius:14px;background:#fff;margin-bottom:10px;box-shadow:var(--shadow);cursor:pointer;}
+.store-row img{width:56px;height:56px;border-radius:12px;object-fit:cover;background:#eee;flex-shrink:0;}
+.store-row .name{font-weight:700;font-size:14.5px;}
+.store-row .status{font-size:11.5px;margin-top:2px;}
+.status.got{color:#4CAF7D;font-weight:700;}
+.status.not{color:var(--ink-soft);}
+
+.detail-photo{width:100%;height:190px;object-fit:cover;border-radius:16px;background:#eee;margin-bottom:14px;}
+.info-line{display:flex;gap:10px;font-size:13.5px;margin-bottom:10px;align-items:flex-start;}
+.info-line .ico{width:20px;text-align:center;}
+.coupon-box{background:var(--beige);border-radius:14px;padding:14px;margin-top:14px;font-size:13.5px;border:2px dashed var(--gold);}
+
+.get-anim{
+  text-align:center;padding:30px 10px;
+}
+.get-anim .stamp-pop{display:inline-block;color:var(--pink-deep);position:relative;z-index:2;}
+.get-anim .stamp-pop svg{filter:drop-shadow(0 6px 14px rgba(255,122,69,.35));}
+.discover-icon svg{animation:creatureReveal 1.1s ease forwards;}
+@keyframes creatureReveal{
+  0%{filter:grayscale(1) brightness(.55);opacity:.25;transform:scale(.65) rotate(-8deg);}
+  55%{filter:grayscale(.25) brightness(.95);opacity:.85;transform:scale(1.12) rotate(4deg);}
+  100%{filter:grayscale(0) brightness(1);opacity:1;transform:scale(1) rotate(0deg);}
+}
+.discover-glow{
+  position:absolute;top:10px;left:50%;width:160px;height:160px;transform:translateX(-50%);
+  background:radial-gradient(circle, rgba(255,211,120,.55) 0%, rgba(255,211,120,0) 70%);
+  animation:glowPulse 1.6s ease-out 1;z-index:1;
+}
+@keyframes glowPulse{0%{opacity:0;transform:translateX(-50%) scale(.6);}40%{opacity:1;}100%{opacity:0;transform:translateX(-50%) scale(1.3);}}
+.discover-badge{
+  position:absolute;top:14px;right:14px;z-index:3;
+  background:var(--pink-deep);color:#fff;font-weight:900;font-size:12px;padding:5px 12px;border-radius:20px;
+  transform:rotate(10deg) scale(0);animation:badgePop .4s ease .5s forwards;
+}
+@keyframes badgePop{0%{transform:rotate(10deg) scale(0);}70%{transform:rotate(10deg) scale(1.2);}100%{transform:rotate(10deg) scale(1);}}
+.sparkle{position:absolute;font-size:18px;animation:floatUp 1.6s ease-out forwards;opacity:0;z-index:2;}
+@keyframes floatUp{0%{opacity:0;transform:translateY(0) scale(.5);}30%{opacity:1;}100%{opacity:0;transform:translateY(-60px) scale(1.1);}}
+
+.complete-screen{
+  background:linear-gradient(180deg,#FFF9E5 0%, #FFDDB0 40%, #A9EBEF 100%);
+  min-height:100vh;padding:30px 22px;text-align:center;position:relative;overflow:hidden;
+}
+.complete-stamp{
+  display:inline-block;border:6px solid #fff;color:#fff;background:linear-gradient(135deg,var(--pink-deep),var(--gold));
+  padding:18px 28px;border-radius:50%;font-weight:900;font-size:20px;transform:rotate(-8deg);
+  box-shadow:0 10px 28px rgba(255,195,61,.4);margin:14px 0;
+}
+.confetti{position:absolute;top:-10px;font-size:16px;animation:fall linear forwards;}
+@keyframes fall{to{transform:translateY(720px) rotate(360deg);opacity:0;}}
+.achieve-card{background:rgba(255,255,255,0.85);border-radius:20px;padding:20px;margin-top:20px;box-shadow:var(--shadow);position:relative;z-index:3;}
+.achieve-no{font-size:13px;letter-spacing:1px;color:var(--ink-soft);font-weight:700;}
+.achieve-no b{color:var(--pink-deep);font-size:16px;}
+
+.tabbar{display:flex;background:#fff;border-radius:16px;padding:4px;margin-bottom:16px;box-shadow:var(--shadow);}
+.tabbar button{flex:1;border:none;background:transparent;padding:10px;border-radius:12px;font-weight:700;font-size:12.5px;color:var(--ink-soft);font-family:inherit;cursor:pointer;}
+.tabbar button.active{background:var(--pink);color:#fff;}
+
+table.admin-table{width:100%;border-collapse:collapse;font-size:12.5px;}
+table.admin-table th,table.admin-table td{padding:8px 6px;border-bottom:1px solid #F1E7DF;text-align:left;}
+table.admin-table th{color:var(--ink-soft);font-weight:700;}
+
+.qr-box{background:#fff;padding:14px;border-radius:14px;text-align:center;box-shadow:var(--shadow);}
+.small-note{font-size:11.5px;color:var(--ink-soft);margin-top:6px;}
+.pill{display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;}
+.pill.on{background:#E4F5EC;color:#3A9463;}
+.pill.off{background:#F5E4E4;color:#B65A5A;}
+.link-btn{background:none;border:none;color:var(--blue-deep);font-weight:700;font-size:13px;cursor:pointer;padding:0;}
+.err-msg{color:#C0555F;font-size:13px;margin:-4px 0 10px;}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+/* =============== Supabase 接続設定 =============== */
+/* ↓↓↓ この2つを、ご自身のSupabaseプロジェクトの値に書き換えてください ↓↓↓ */
+const SUPABASE_URL = 'https://qaugcybfnqgeftpihojy.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFhdWdjeWJmbnFnZWZ0cGlob2p5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM4MzI5MzEsImV4cCI6MjA5OTQwODkzMX0.zEDGFD87PAU3mfctp4ESOrfw55JKNr5_pwTyXJeMn9s';
+/* ↑↑↑ ここまで ↑↑↑ */
+const SUPABASE_CONFIGURED = SUPABASE_URL.indexOf('https://qaugcybfnqgeftpihojy.supabase.co')===-1 && SUPABASE_ANON_KEY.indexOf('eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFhdWdjeWJmbnFnZWZ0cGlob2p5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM4MzI5MzEsImV4cCI6MjA5OTQwODkzMX0.zEDGFD87PAU3mfctp4ESOrfw55JKNr5_pwTyXJeMn9s')===-1;
+const sb = SUPABASE_CONFIGURED ? supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
+
+/* この端末を識別するための番号（ログイン不要で、閉じても続きから再開できる仕組み） */
+function getDeviceToken(){
+  let t = localStorage.getItem('malia_device_token');
+  if(!t){ t = 'dev_'+Math.random().toString(36).slice(2)+Date.now().toString(36); localStorage.setItem('malia_device_token', t); }
+  return t;
+}
+
+async function getConfigDB(){
+  try{
+    const { data, error } = await sb.from('config').select('*').eq('id',1).single();
+    if(error || !data) return DEFAULT_CONFIG;
+    return {
+      campaignName: data.campaign_name, requiredStamps: data.required_stamps,
+      startDate: data.start_date, endDate: data.end_date,
+      adminEmail: data.admin_email, adminPassword: data.admin_password,
+      lineUrl: data.line_url, instagramUrl: data.instagram_url, contactEmail: data.contact_email,
+      sendMethods:{line:data.send_line, instagram:data.send_instagram, email:data.send_email}
+    };
+  }catch(e){ console.error('getConfigDB failed', e); return DEFAULT_CONFIG; }
+}
+async function saveConfigDB(cfg){
+  await sb.from('config').update({
+    campaign_name: cfg.campaignName, required_stamps: cfg.requiredStamps,
+    start_date: cfg.startDate||null, end_date: cfg.endDate||null,
+    admin_email: cfg.adminEmail, admin_password: cfg.adminPassword,
+    line_url: cfg.lineUrl, instagram_url: cfg.instagramUrl, contact_email: cfg.contactEmail,
+    send_line: cfg.sendMethods.line, send_instagram: cfg.sendMethods.instagram, send_email: cfg.sendMethods.email
+  }).eq('id',1);
+}
+async function getStoresDB(){
+  try{
+    const { data, error } = await sb.from('stores').select('*').order('id');
+    if(error || !data || !data.length) return DEFAULT_STORES;
+    return data.map(s=>({id:s.id, name:s.name, icon:s.icon, code:s.code, photo:s.photo||'', address:s.address||'', hours:s.hours||'', homepage:s.homepage||'', instagram:s.instagram||'', coupon:s.coupon||''}));
+  }catch(e){ console.error('getStoresDB failed', e); return DEFAULT_STORES; }
+}
+async function saveStoreDB(s){
+  const { error } = await sb.from('stores').upsert({id:s.id, name:s.name, icon:s.icon, code:s.code, photo:s.photo, address:s.address, hours:s.hours, homepage:s.homepage, instagram:s.instagram, coupon:s.coupon});
+  if(error) throw error;
+}
+async function deleteStoreDB(id){ await sb.from('stores').delete().eq('id', id); }
+
+async function loadParticipantByDeviceToken(){
+  try{
+    const token = getDeviceToken();
+    const { data, error } = await sb.from('participants').select('*').eq('device_token', token).maybeSingle();
+    if(error || !data) return null;
+    const { data: stampRows } = await sb.from('participant_stamps').select('store_id').eq('participant_id', data.id);
+    return { id:data.id, nickname:data.nickname, stamps:(stampRows||[]).map(r=>r.store_id) };
+  }catch(e){ console.error('loadParticipant failed', e); return null; }
+}
+async function createParticipantDB(nickname){
+  const token = getDeviceToken();
+  const { data, error } = await sb.from('participants').insert({device_token:token, nickname}).select().single();
+  if(error) throw error;
+  return { id:data.id, nickname:data.nickname, stamps:[] };
+}
+
+/* 湘南の夏 生きもの図鑑：5種類の生き物イラストと紹介文 */
+const ICON_KEYS = ['turtle','dolphin','crab','starfish','hermit'];
+const ICON_LABELS = {turtle:'🐢 ウミガメ', dolphin:'🐬 イルカ', crab:'🦀 カニ', starfish:'⭐ ヒトデ', hermit:'🐚 ヤドカリ'};
+const CREATURE_INFO = {
+  turtle:   {name:'ウミガメ', intro:'ゆったり海を泳ぐ、やさしい人気者'},
+  dolphin:  {name:'イルカ',   intro:'ジャンプが得意な、海の元気者'},
+  crab:     {name:'カニ',     intro:'砂浜を横歩きする、小さな冒険家'},
+  starfish: {name:'ヒトデ',   intro:'星の形をした、海の不思議な生き物'},
+  hermit:   {name:'ヤドカリ', intro:'お気に入りの貝がらを背負ってお引っ越し'},
+};
+
+function iconSVG(key, size){
+  size = size || 40;
+  const icons = {
+    turtle: `
+      <ellipse cx="50" cy="58" rx="27" ry="21" fill="#A9DED4"/>
+      <circle cx="50" cy="58" r="10" fill="#F3DFB8" opacity=".65"/>
+      <circle cx="50" cy="31" r="11" fill="#A9DED4"/>
+      <ellipse cx="19" cy="46" rx="10" ry="6" fill="#A9DED4" transform="rotate(-24 19 46)"/>
+      <ellipse cx="81" cy="46" rx="10" ry="6" fill="#A9DED4" transform="rotate(24 81 46)"/>
+      <ellipse cx="27" cy="79" rx="9" ry="5" fill="#A9DED4" transform="rotate(24 27 79)"/>
+      <ellipse cx="73" cy="79" rx="9" ry="5" fill="#A9DED4" transform="rotate(-24 73 79)"/>
+      <circle cx="46" cy="29" r="2.2" fill="#3A4245"/>
+      <circle cx="54" cy="29" r="2.2" fill="#3A4245"/>`,
+    dolphin: `
+      <path d="M14 68 Q8 40 34 24 Q54 12 76 28 Q88 37 82 50 Q73 44 66 50 Q74 60 66 68 Q57 55 46 58 Q30 62 23 72 Q16 72 14 68 Z" fill="#BFE3EE"/>
+      <path d="M44 21 Q50 8 62 12 Q54 18 52 26 Z" fill="#BFE3EE"/>
+      <path d="M20 60 Q28 65 37 61" stroke="#8FCBDB" stroke-width="2.5" fill="none" opacity=".8"/>
+      <circle cx="32" cy="40" r="2.4" fill="#3A4245"/>`,
+    crab: `
+      <ellipse cx="50" cy="58" rx="23" ry="16" fill="#FFB199"/>
+      <circle cx="17" cy="45" r="10" fill="#FF9868"/>
+      <circle cx="83" cy="45" r="10" fill="#FF9868"/>
+      <path d="M30 54 L18 45" stroke="#FF9868" stroke-width="6" stroke-linecap="round"/>
+      <path d="M70 54 L82 45" stroke="#FF9868" stroke-width="6" stroke-linecap="round"/>
+      <g stroke="#FF9868" stroke-width="4" stroke-linecap="round">
+        <line x1="30" y1="65" x2="17" y2="75"/>
+        <line x1="38" y1="72" x2="28" y2="85"/>
+        <line x1="70" y1="65" x2="83" y2="75"/>
+        <line x1="62" y1="72" x2="72" y2="85"/>
+      </g>
+      <circle cx="42" cy="52" r="3" fill="#3A2317"/>
+      <circle cx="58" cy="52" r="3" fill="#3A2317"/>`,
+    starfish: `
+      <path d="M50 10 L61 38 L88 42 L67 60 L74 87 L50 73 L26 87 L33 60 L12 42 L39 38 Z" fill="#FFB199"/>
+      <circle cx="50" cy="50" r="8" fill="#F3DFB8"/>
+      <circle cx="50" cy="26" r="2" fill="#F3DFB8"/>
+      <circle cx="74" cy="45" r="2" fill="#F3DFB8"/>
+      <circle cx="63" cy="72" r="2" fill="#F3DFB8"/>
+      <circle cx="37" cy="72" r="2" fill="#F3DFB8"/>
+      <circle cx="26" cy="45" r="2" fill="#F3DFB8"/>`,
+    hermit: `
+      <path d="M40 82 Q18 74 22 46 Q26 18 54 18 Q78 18 80 40 Q82 56 62 58 Q48 60 50 44 Q52 33 65 36" fill="none" stroke="#E0B978" stroke-width="11" stroke-linecap="round"/>
+      <ellipse cx="38" cy="82" rx="13" ry="9" fill="#FFB199"/>
+      <g stroke="#FFB199" stroke-width="4.5" stroke-linecap="round">
+        <line x1="28" y1="87" x2="17" y2="93"/>
+        <line x1="49" y1="87" x2="58" y2="93"/>
+      </g>
+      <circle cx="33" cy="79" r="2.2" fill="#3A2317"/>
+      <circle cx="43" cy="79" r="2.2" fill="#3A2317"/>`,
+  };
+  const inner = icons[key] || icons.turtle;
+  return `<svg viewBox="0 0 100 100" width="${size}" height="${size}">${inner}</svg>`;
+}
+/* 発見前は生き物が分からないよう、謎解き感のある「？」プレースホルダーを表示 */
+function mysteryIconSVG(size){
+  size = size || 40;
+  return `<svg viewBox="0 0 100 100" width="${size}" height="${size}">
+    <circle cx="50" cy="50" r="40" fill="none" stroke="#C9D6D6" stroke-width="5" stroke-dasharray="9 8"/>
+    <text x="50" y="64" font-size="36" text-anchor="middle" fill="#C9D6D6" font-family="'Zen Kaku Gothic New',sans-serif" font-weight="700">?</text>
+  </svg>`;
+}
+
+const DEFAULT_STORES = [
+  {id:'A', name:'店舗A', icon:'turtle', code:'1234', photo:'', address:'神奈川県藤沢市○○1-1-1', hours:'10:00〜18:00', homepage:'', instagram:'', coupon:'ご提示で駐車場1時間無料'},
+  {id:'B', name:'店舗B', icon:'dolphin', code:'2345', photo:'', address:'神奈川県茅ヶ崎市○○2-2-2', hours:'11:00〜19:00', homepage:'', instagram:'', coupon:'ドリンク1杯無料'},
+  {id:'C', name:'店舗C', icon:'crab', code:'3456', photo:'', address:'神奈川県鎌倉市○○3-3-3', hours:'9:00〜17:00', homepage:'', instagram:'', coupon:'お会計から5%OFF'},
+  {id:'D', name:'店舗D', icon:'starfish', code:'4567', photo:'', address:'神奈川県逗子市○○4-4-4', hours:'10:00〜20:00', homepage:'', instagram:'', coupon:'次回来店時にミニギフト'},
+  {id:'E', name:'店舗E', icon:'hermit', code:'5678', photo:'', address:'神奈川県平塚市○○5-5-5', hours:'10:00〜18:00', homepage:'', instagram:'', coupon:'お子様に駄菓子プレゼント'},
+];
+const DEFAULT_CONFIG = {
+  campaignName:'Malia おでかけスタンプラリー 〜湘南サマー〜',
+  requiredStamps:5,
+  startDate:'2026-07-01',
+  endDate:'2026-08-31',
+  adminEmail:'admin@malia-example.jp',
+  adminPassword:'malia2026',
+  lineUrl:'https://line.me/R/ti/p/@malia-official',
+  instagramUrl:'https://instagram.com/malia_official',
+  contactEmail:'info@malia-example.jp',
+  sendMethods:{line:true, instagram:true, email:false}
+};
+
+/* =============== アプリ状態 =============== */
+const state = {
+  screen:'loading',
+  participant:null,
+  currentStoreId:null,
+  codeError:'',
+  justGotStamp:null,
+  achievementInfo:null,
+  admin:false,
+  adminTab:'stores',
+  editingStore:null,
+  toast:null,
+  storeListTarget:null,
+};
+
+function go(screen, extra){ stopCamera(); Object.assign(state, {screen}, extra||{}); render(); window.scrollTo(0,0); }
+
+let activeStream = null;
+function stopCamera(){
+  if(activeStream){ activeStream.getTracks().forEach(t=>t.stop()); activeStream = null; }
+}
+
+function remainingCount(p, required){ return Math.max(required - (p? p.stamps.length : 0), 0); }
+
+function remainMessage(gotCount, total){
+  const remain = total - gotCount;
+  const overview = `${total}種類のうち、${gotCount}種類を発見！`;
+  if(remain<=0) return null;
+  let tier;
+  if(remain===1) tier = '🌴 あと1種類でコンプリート！';
+  else if(remain===2) tier = '🏝️ あと2種類でコンプリート！';
+  else tier = 'あと'+remain+'種類でコンプリート！';
+  return {overview, tier, final: remain===1};
+}
+
+/* =============== 初期ロード =============== */
+async function boot(){
+  const p = await loadParticipantByDeviceToken();
+  if(p){ state.participant = p; go('card'); return; }
+  go('top');
+}
+
+/* =============== レンダリング =============== */
+function el(html){ const d=document.createElement('div'); d.innerHTML=html; return d.firstElementChild; }
+
+async function render(){
+  const app = document.getElementById('app');
+  app.innerHTML = '<div style="text-align:center;padding:80px 20px;color:#B98;">読み込み中…</div>';
+  try{
+    const view = await renderScreen();
+    app.innerHTML = '';
+    app.appendChild(view);
+  }catch(e){
+    console.error('render failed:', e);
+    app.innerHTML = `
+      <div style="padding:60px 24px;text-align:center;">
+        <div style="font-size:36px;margin-bottom:12px;">📶</div>
+        <h2 style="margin-bottom:10px;">通信の状態が不安定なようです</h2>
+        <p style="font-size:13px;color:var(--ink-soft);line-height:1.7;margin-bottom:20px;">電波の良い場所で、もう一度お試しください。</p>
+        <button class="btn btn-primary" id="retryBtn" style="max-width:260px;margin:0 auto;">もう一度試す</button>
+      </div>`;
+    const rb = document.getElementById('retryBtn');
+    if(rb) rb.onclick = ()=> render();
+  }
+}
+
+async function renderScreen(){
+  const cfg = await getConfigDB();
+  const stores = await getStoresDB();
+
+  if(state.screen==='top') return screenTop(cfg);
+  if(state.screen==='join') return screenJoin(cfg);
+  if(state.screen==='card') return await screenCard(cfg, stores);
+  if(state.screen==='storeList') return await screenStoreList(cfg, stores);
+  if(state.screen==='storeDetail') return screenStoreDetail(cfg, stores);
+  if(state.screen==='scan') return screenScan(cfg, stores);
+  if(state.screen==='codeInput') return screenCodeInput(cfg, stores);
+  if(state.screen==='gotStamp') return await screenGotStamp(cfg, stores);
+  if(state.screen==='complete') return await screenComplete(cfg);
+  if(state.screen==='adminLogin') return screenAdminLogin(cfg);
+  if(state.screen==='adminHome') return await screenAdminHome(cfg, stores);
+  return el('<div>画面がありません</div>');
+}
+
+/* ---------- トップ ---------- */
+function screenTop(cfg){
+  const wrap = el('<div></div>');
+  wrap.innerHTML = `
+  <div class="topbar"><div class="logo">Malia</div><div class="sub">おでかけスタンプラリー</div></div>
+  <div class="hero">
+    <div class="hero-sun"></div>
+    <div class="hero-palm">🌴</div>
+    <div class="hero-badge">☀️ 湘南サマー・スタンプラリー 2026</div>
+    <div class="hero-title">${cfg.campaignName}</div>
+    <div class="hero-desc">お店をめぐって、みんなでスタンプを集めよう！スマホだけでかんたん参加、アプリのダウンロードは不要です。</div>
+    <svg class="hero-wave" viewBox="0 0 400 40" preserveAspectRatio="none"><path d="M0 20 Q50 0 100 20 T200 20 T300 20 T400 20 V40 H0 Z" fill="#FDFBF6"/></svg>
+  </div>
+  <div class="screen">
+    <div class="card">
+      <h2 class="section-title">🌴 遊び方</h2>
+      <div class="info-line"><span class="ico">1️⃣</span><span>ニックネームだけで参加登録</span></div>
+      <div class="info-line"><span class="ico">2️⃣</span><span>店舗のQRコードを読み取り、コードを入力して生き物を発見</span></div>
+      <div class="info-line"><span class="ico">3️⃣</span><span>${cfg.requiredStamps}種類の生き物を集めて、図鑑をコンプリート！</span></div>
+    </div>
+    <button class="btn btn-primary" id="startBtn">参加する（ニックネーム登録）</button>
+    <button class="btn btn-ghost" id="storeListBtn">参加せずに店舗一覧を見る</button>
+    <div style="text-align:center;margin-top:30px;"><button class="link-btn" id="adminLink">管理者の方はこちら</button></div>
+  </div>
+  `;
+  wrap.querySelector('#startBtn').onclick = ()=> go('join');
+  wrap.querySelector('#storeListBtn').onclick = ()=> go('storeList',{storeListTarget:'guest'});
+  wrap.querySelector('#adminLink').onclick = ()=> go('adminLogin');
+  return wrap;
+}
+
+/* ---------- 参加登録 ---------- */
+function screenJoin(cfg){
+  const wrap = el('<div class="screen"></div>');
+  wrap.innerHTML = `
+  <div class="card">
+    <h2 class="section-title">✏️ ニックネーム登録</h2>
+    <label>アプリ内で表示される名前です（本名でなくてOK）</label>
+    <input type="text" id="nick" placeholder="例）まりこ" maxlength="12">
+    <div class="err-msg" id="err" style="display:none;"></div>
+    <button class="btn btn-primary" id="go">スタンプラリーをはじめる</button>
+    <button class="btn btn-ghost" id="back">戻る</button>
+  </div>`;
+  wrap.querySelector('#back').onclick = ()=> go('top');
+  wrap.querySelector('#go').onclick = async ()=>{
+    const v = wrap.querySelector('#nick').value.trim();
+    const errEl = wrap.querySelector('#err');
+    if(!v){ errEl.textContent='ニックネームを入力してください'; errEl.style.display='block'; return; }
+    try{
+      state.participant = await createParticipantDB(v);
+    }catch(e){
+      console.error('join failed', e);
+      errEl.textContent='登録に失敗しました。もう一度お試しください。'; errEl.style.display='block'; return;
+    }
+    if(state.pendingStoreId){
+      const id = state.pendingStoreId; state.pendingStoreId = null;
+      go('codeInput', {currentStoreId:id, codeError:''});
+    } else {
+      go('card');
+    }
+  };
+  return wrap;
+}
+
+/* ---------- 湘南の夏 生きもの図鑑 ---------- */
+async function screenCard(cfg, stores){
+  const p = state.participant || {nickname:'', stamps:[]};
+  const gotCount = p.stamps.length;
+  const msg = remainMessage(gotCount, cfg.requiredStamps);
+  const wrap = el('<div class="screen"></div>');
+  const gridHtml = stores.slice(0,cfg.requiredStamps).map(s=>{
+    const got = p.stamps.includes(s.id);
+    const label = got
+      ? `<div style="font-size:12px;font-weight:700;margin-top:3px;">${CREATURE_INFO[s.icon]? CREATURE_INFO[s.icon].name : s.name}</div>`
+      : `<div style="font-size:12px;font-weight:700;margin-top:3px;letter-spacing:1px;">？？？</div><div style="font-size:9.5px;color:#B7C4C4;">まだ見つかっていないよ</div>`;
+    return `<div class="stamp-slot ${got?'filled':''}"><span class="icon icon-wrap ${got?'got':'notgot'}">${got? iconSVG(s.icon, 60) : mysteryIconSVG(52)}</span>${label}</div>`;
+  }).join('');
+  wrap.innerHTML = `
+  <div class="topbar"><div class="logo">Malia</div><div class="sub">こんにちは、${p.nickname}さん</div></div>
+  <div class="card">
+    <h2 class="section-title">📖 湘南の夏 生きもの図鑑</h2>
+    <div class="stamp-grid">${gridHtml}</div>
+    ${msg ? `<div class="remain-banner ${msg.final?'final':''}"><div style="font-size:13px;font-weight:700;">${msg.overview}</div><div style="margin-top:4px;">${msg.tier}</div></div>` : ''}
+    ${gotCount>=cfg.requiredStamps ? `<button class="btn btn-primary" id="toComplete" style="margin-top:14px;">達成画面を見る 🎉</button>` : ''}
+  </div>
+  <button class="btn btn-outline-blue" id="scanBtn">📷 QRコードを読み取る</button>
+  <button class="btn btn-secondary" id="listBtn">🏝️ 店舗一覧を見る</button>
+  `;
+  wrap.querySelector('#scanBtn').onclick = ()=> go('scan');
+  wrap.querySelector('#listBtn').onclick = ()=> go('storeList',{storeListTarget:'participant'});
+  const cb = wrap.querySelector('#toComplete');
+  if(cb) cb.onclick = ()=> go('complete');
+  return wrap;
+}
+
+/* ---------- 店舗一覧 ---------- */
+async function screenStoreList(cfg, stores){
+  const p = state.participant;
+  const wrap = el('<div class="screen"></div>');
+  const rows = stores.map(s=>{
+    const got = p && p.stamps.includes(s.id);
+    return `<div class="store-row" data-id="${s.id}">
+      <img src="${s.photo||'https://images.weserv.nl/?url=placehold.co/100x100/EFE4D0/9c8a7a?text=Malia'}">
+      <div><div class="name">${s.name}</div><div class="status ${got?'got':'not'}">${got?'✅ スタンプ獲得済み':'未獲得'}</div></div>
+    </div>`;
+  }).join('');
+  wrap.innerHTML = `
+  <div class="screen" style="padding-top:6px;">
+  <h2 class="section-title">🏝️ 参加店舗一覧</h2>
+  ${rows}
+  <button class="btn btn-ghost" id="back">戻る</button>
+  </div>`;
+  wrap.querySelectorAll('.store-row').forEach(r=>{
+    r.onclick = ()=> go('storeDetail', {currentStoreId:r.dataset.id});
+  });
+  wrap.querySelector('#back').onclick = ()=> go(state.participant? 'card':'top');
+  return wrap;
+}
+
+/* ---------- 店舗詳細 ---------- */
+function screenStoreDetail(cfg, stores){
+  const s = stores.find(x=>x.id===state.currentStoreId);
+  const wrap = el('<div class="screen"></div>');
+  const mapUrl = 'https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(s.address);
+  wrap.innerHTML = `
+  <img class="detail-photo" src="${s.photo||'https://images.weserv.nl/?url=placehold.co/400x220/AFD4E0/ffffff?text=Malia'}">
+  <div class="card">
+    <h2 class="section-title">🏠 ${s.name}</h2>
+    <div class="info-line"><span class="ico">📍</span><span>${s.address}</span></div>
+    <div class="info-line"><span class="ico">🕒</span><span>${s.hours}</span></div>
+    ${s.homepage? `<div class="info-line"><span class="ico">🔗</span><a href="${s.homepage}" target="_blank">ホームページ</a></div>`:''}
+    ${s.instagram? `<div class="info-line"><span class="ico">📷</span><a href="${s.instagram}" target="_blank">Instagram</a></div>`:''}
+    <div class="info-line"><span class="ico">🗺️</span><a href="${mapUrl}" target="_blank">地図で見る</a></div>
+    ${s.coupon? `<div class="coupon-box">🎁 クーポン：${s.coupon}</div>`:''}
+  </div>
+  <button class="btn btn-ghost" id="back">戻る</button>
+  `;
+  wrap.querySelector('#back').onclick = ()=> go('storeList');
+  return wrap;
+}
+
+/* ---------- QRスキャン（カメラで実際にQRコードを読み取る） ---------- */
+function screenScan(cfg, stores){
+  const wrap = el('<div class="screen"></div>');
+  const opts = stores.map(s=>`<option value="${s.id}">${s.name}</option>`).join('');
+  wrap.innerHTML = `
+  <div class="card">
+    <h2 class="section-title">📷 QRコードを読み取る</h2>
+    <p style="font-size:13px;color:var(--ink-soft);">お店に掲示されているQRコードにカメラを向けてください。読み取れたら、お店に掲示されている4桁コードの入力にすすみます。</p>
+    <button class="btn btn-primary" id="camBtn">カメラを起動する</button>
+    <div id="camWrap" style="display:none;margin-top:12px;">
+      <video id="camVideo" playsinline style="width:100%;border-radius:16px;background:#000;"></video>
+      <div class="small-note" style="text-align:center;">QRコードを画面の中央に映してください</div>
+      <button class="btn btn-ghost" id="camStop">カメラを止める</button>
+    </div>
+    ${state.codeError? `<div class="err-msg">${state.codeError}</div>` : ''}
+    <details style="margin-top:14px;">
+      <summary style="font-size:12.5px;color:var(--ink-soft);cursor:pointer;">カメラが使えない場合（テスト用に店舗を選ぶ）</summary>
+      <div style="margin-top:10px;">
+        <select id="storeSel">${opts}</select>
+        <button class="btn btn-secondary" id="manualGet">この店舗を選ぶ</button>
+      </div>
+    </details>
+    <button class="btn btn-ghost" id="back">戻る</button>
+  </div>`;
+
+  wrap.querySelector('#back').onclick = ()=> go('card');
+  wrap.querySelector('#manualGet').onclick = ()=>{
+    const id = wrap.querySelector('#storeSel').value;
+    go('codeInput', {currentStoreId:id, codeError:''});
+  };
+
+  wrap.querySelector('#camBtn').onclick = async ()=>{
+    const camWrap = wrap.querySelector('#camWrap');
+    const video = wrap.querySelector('#camVideo');
+    try{
+      const stream = await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'}});
+      activeStream = stream;
+      video.srcObject = stream;
+      await video.play();
+      camWrap.style.display = 'block';
+      wrap.querySelector('#camBtn').style.display = 'none';
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      function tick(){
+        if(!activeStream) return; // camera stopped
+        if(video.readyState === video.HAVE_ENOUGH_DATA){
+          canvas.width = video.videoWidth; canvas.height = video.videoHeight;
+          ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+          const imageData = ctx.getImageData(0,0,canvas.width,canvas.height);
+          const code = jsQR(imageData.data, imageData.width, imageData.height);
+          if(code && code.data){
+            let storeId = null;
+            try{ const u = new URL(code.data); storeId = u.searchParams.get('store'); }catch(e){ storeId = null; }
+            if(storeId && stores.find(s=>s.id===storeId)){
+              stopCamera();
+              go('codeInput', {currentStoreId:storeId, codeError:''});
+              return;
+            }
+          }
+        }
+        requestAnimationFrame(tick);
+      }
+      requestAnimationFrame(tick);
+    }catch(e){
+      go('scan', {codeError:'カメラを起動できませんでした。ブラウザのカメラ許可設定をご確認いただくか、下の「カメラが使えない場合」からお試しください。'});
+    }
+  };
+  wrap.querySelector('#camStop').onclick = ()=>{
+    stopCamera();
+    wrap.querySelector('#camWrap').style.display='none';
+    wrap.querySelector('#camBtn').style.display='block';
+  };
+  return wrap;
+}
+
+/* ---------- 4桁コード入力 ---------- */
+function screenCodeInput(cfg, stores){
+  const s = stores.find(x=>x.id===state.currentStoreId);
+  const wrap = el('<div class="screen"></div>');
+  wrap.innerHTML = `
+  <div class="card" style="text-align:center;">
+    <h2 class="section-title" style="justify-content:center;">🔑 コードを入力してください</h2>
+    <p style="font-size:13px;color:var(--ink-soft);">お店に掲示されている4桁の数字を入力すると、生き物が発見できます</p>
+    <div class="code-input-row" style="display:flex;gap:8px;justify-content:center;margin:20px 0;">
+      ${[0,1,2,3].map(i=>`<input class="code-box" style="width:52px;height:60px;text-align:center;font-size:26px;font-weight:900;border-radius:12px;border:2px solid #EFE2DC;" maxlength="1" inputmode="numeric" id="c${i}">`).join('')}
+    </div>
+    ${state.codeError? `<div class="err-msg">${state.codeError}</div>` : ''}
+    <button class="btn btn-primary" id="submit">生き物を発見する</button>
+    <button class="btn btn-ghost" id="back">戻る</button>
+  </div>`;
+  const boxes = [0,1,2,3].map(i=>wrap.querySelector('#c'+i));
+  boxes.forEach((b,i)=>{
+    b.oninput = ()=>{ b.value = b.value.replace(/[^0-9]/g,''); if(b.value && boxes[i+1]) boxes[i+1].focus(); };
+  });
+  wrap.querySelector('#submit').onclick = async ()=>{
+    const code = boxes.map(b=>b.value).join('');
+    if(code.length<4){ go('codeInput', {codeError:'4桁すべて入力してください'}); return; }
+    if(code !== s.code){ go('codeInput', {codeError:'コードが正しくありません'}); return; }
+    const p = state.participant || {stamps:[]};
+    if(p.stamps.includes(s.id)){ go('codeInput', {codeError:'この生き物はすでに発見済みです'}); return; }
+    await grantStamp(s.id);
+  };
+  wrap.querySelector('#back').onclick = ()=> go('scan');
+  return wrap;
+}
+
+/* ---------- スタンプ付与処理（QR読み取り＝スタンプ獲得） ---------- */
+async function grantStamp(storeId){
+  if(!state.participant){ go('top'); return; }
+  if(state.participant.stamps.includes(storeId)){
+    go('scan', {codeError:'この生き物はすでに発見済みです'});
+    return;
+  }
+  try{
+    const { error } = await sb.from('participant_stamps').insert({participant_id: state.participant.id, store_id: storeId});
+    if(error){
+      if(error.code==='23505'){ go('scan', {codeError:'この生き物はすでに発見済みです'}); return; }
+      throw error;
+    }
+  }catch(e){
+    console.error('grantStamp failed', e);
+    go('scan', {codeError:'通信エラーが発生しました。もう一度お試しください。'});
+    return;
+  }
+  state.participant.stamps.push(storeId);
+  go('gotStamp', {justGotStamp:storeId, codeError:''});
+}
+
+/* ---------- 生き物発見の演出 ---------- */
+async function screenGotStamp(cfg, stores){
+  const s = stores.find(x=>x.id===state.justGotStamp);
+  const info = CREATURE_INFO[s.icon] || {name:s.name, intro:''};
+  const p = state.participant || {nickname:'', stamps:[]};
+  const msg = remainMessage(p.stamps.length, cfg.requiredStamps);
+  const wrap = el('<div class="screen"></div>');
+  wrap.innerHTML = `
+  <div class="card get-anim" style="position:relative;overflow:hidden;">
+    ${['✨','⭐','✨','🌟'].map((sp,i)=>`<span class="sparkle" style="left:${12+i*24}%;top:6px;animation-delay:${i*0.15}s;">${sp}</span>`).join('')}
+    <div class="discover-glow"></div>
+    <div class="discover-badge">発見！</div>
+    <div class="stamp-pop discover-icon"><span class="icon-wrap got">${iconSVG(s.icon, 110)}</span></div>
+    <h2 style="margin:14px 0 2px;">新しい生き物を発見！</h2>
+    <p style="font-weight:900;font-size:17px;margin:2px 0;">${info.name}を発見しました！</p>
+    <p style="font-size:13px;color:var(--ink-soft);margin:2px 0 8px;">${info.intro}</p>
+    <p style="font-size:12.5px;color:var(--ink-soft);">湘南の夏 生きもの図鑑に登録されました</p>
+    ${msg? `<div class="remain-banner ${msg.final?'final':''}" style="margin-top:16px;"><div style="font-size:13px;font-weight:700;">${msg.overview}</div><div style="margin-top:4px;">${msg.tier}</div></div>`:''}
+  </div>
+  <button class="btn btn-primary" id="toCard">図鑑にもどる</button>
+  `;
+  wrap.querySelector('#toCard').onclick = ()=>{
+    if(p.stamps.length>=cfg.requiredStamps) go('complete'); else go('card');
+  };
+  return wrap;
+}
+
+/* ---------- 達成画面 ---------- */
+async function screenComplete(cfg){
+  const p = state.participant || {nickname:'', stamps:[]};
+  let ach = state.achievementInfo;
+  if(!ach){
+    try{
+      const { data: numData, error: numErr } = await sb.rpc('issue_achievement_number');
+      if(numErr) throw numErr;
+      const achievedAt = new Date().toISOString();
+      const { error } = await sb.from('achievements').insert({number:numData, participant_id:p.id, nickname:p.nickname, stamp_count:p.stamps.length, achieved_at:achievedAt});
+      if(error) throw error;
+      ach = {number:numData, nickname:p.nickname, stampCount:p.stamps.length, achievedAt};
+    }catch(e){
+      console.error('achievement issue failed', e);
+      ach = {number:'発行できませんでした', nickname:p.nickname, stampCount:p.stamps.length, achievedAt:new Date().toISOString()};
+    }
+    state.achievementInfo = ach;
+  }
+  const dt = new Date(ach.achievedAt);
+  const dtStr = dt.getFullYear()+'/'+(dt.getMonth()+1)+'/'+dt.getDate()+' '+String(dt.getHours()).padStart(2,'0')+':'+String(dt.getMinutes()).padStart(2,'0');
+  const confetti = ['🌸','✨','🎊','🌺','⭐'];
+  const wrap = el('<div></div>');
+  wrap.innerHTML = `
+  <div class="complete-screen">
+    ${Array.from({length:16}).map((_,i)=>`<span class="confetti" style="left:${Math.random()*100}%;animation-duration:${2+Math.random()*2}s;animation-delay:${Math.random()*1.5}s;">${confetti[i%confetti.length]}</span>`).join('')}
+    <div style="position:relative;z-index:3;">
+      <div style="font-size:20px;font-weight:900;color:var(--pink-deep);">🌴 CONGRATULATIONS!! 🌴</div>
+      <div style="margin-top:6px;font-size:14px;font-weight:700;">おめでとうございます！コンプリートしました！🎉</div>
+      <div class="complete-stamp">COMPLETE</div>
+      <div class="achieve-card">
+        <div style="font-size:13px;color:var(--ink-soft);">参加者ニックネーム</div>
+        <div style="font-weight:900;font-size:17px;margin-bottom:8px;">${p.nickname} さん</div>
+        <div style="font-size:13px;color:var(--ink-soft);">キャンペーン</div>
+        <div style="font-weight:700;font-size:13.5px;margin-bottom:8px;">${cfg.campaignName}</div>
+        <div style="font-size:13px;color:var(--ink-soft);">獲得スタンプ数</div>
+        <div style="font-weight:700;margin-bottom:8px;">${ach.stampCount} 個</div>
+        <div style="font-size:13px;color:var(--ink-soft);">達成日時</div>
+        <div style="font-weight:700;margin-bottom:8px;">${dtStr}</div>
+        <div class="achieve-no">達成番号：<b>${ach.number}</b></div>
+      </div>
+      <div class="card" style="margin-top:18px;text-align:left;">
+        <div style="font-weight:700;margin-bottom:8px;">📸 この画面をスクリーンショットして、以下へ送ってください</div>
+        ${cfg.sendMethods.line? `<div class="info-line"><span class="ico">💬</span><a href="${cfg.lineUrl}" target="_blank">Malia公式LINE</a></div>`:''}
+        ${cfg.sendMethods.instagram? `<div class="info-line"><span class="ico">📷</span><a href="${cfg.instagramUrl}" target="_blank">Instagram DM</a></div>`:''}
+        ${cfg.sendMethods.email? `<div class="info-line"><span class="ico">✉️</span><span>${cfg.contactEmail}</span></div>`:''}
+      </div>
+      <button class="btn btn-secondary" id="backTop" style="margin-top:16px;">トップにもどる</button>
+    </div>
+  </div>`;
+  wrap.querySelector('#backTop').onclick = ()=> go('card');
+  return wrap;
+}
+
+/* ---------- 管理者ログイン ---------- */
+function screenAdminLogin(cfg){
+  const wrap = el('<div class="screen"></div>');
+  wrap.innerHTML = `
+  <div class="card">
+    <h2 class="section-title">🔐 管理者ログイン</h2>
+    <label>メールアドレス</label>
+    <input type="email" id="email" value="" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false">
+    <label>パスワード</label>
+    <input type="password" id="pw" value="" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false">
+    <div class="err-msg" id="err" style="display:none;"></div>
+    <button class="btn btn-primary" id="login">ログイン</button>
+    <button class="btn btn-ghost" id="back">戻る</button>
+    <div class="small-note" style="text-align:center;margin-top:14px;">初期ログイン情報：${cfg.adminEmail} ／ ${cfg.adminPassword}</div>
+  </div>`;
+  wrap.querySelector('#back').onclick = ()=> go('top');
+  wrap.querySelector('#login').onclick = ()=>{
+    const email = wrap.querySelector('#email').value.trim().toLowerCase();
+    const pw = wrap.querySelector('#pw').value.trim();
+    if(email===(cfg.adminEmail||'').trim().toLowerCase() && pw===(cfg.adminPassword||'').trim()){
+      state.admin = true; go('adminHome');
+    } else {
+      const errEl = wrap.querySelector('#err');
+      errEl.textContent='メールアドレスまたはパスワードが正しくありません'; errEl.style.display='block';
+    }
+  };
+  return wrap;
+}
+
+/* ---------- 管理画面トップ ---------- */
+async function screenAdminHome(cfg, stores){
+  if(!state.admin){ go('adminLogin'); return el('<div></div>'); }
+  const wrap = el('<div class="screen"></div>');
+  const tabs = ['stores','participants','achievers','settings'];
+  const tabLabel = {stores:'店舗管理', participants:'参加者', achievers:'達成者', settings:'設定'};
+  wrap.innerHTML = `
+  <div class="topbar"><div class="logo">Malia 管理画面</div><button class="link-btn" id="logout">ログアウト</button></div>
+  <div class="tabbar">${tabs.map(t=>`<button data-t="${t}" class="${state.adminTab===t?'active':''}">${tabLabel[t]}</button>`).join('')}</div>
+  <div id="tabBody"></div>
+  `;
+  wrap.querySelectorAll('.tabbar button').forEach(b=> b.onclick = ()=>{ state.adminTab=b.dataset.t; render(); });
+  wrap.querySelector('#logout').onclick = ()=>{ state.admin=false; go('top'); };
+
+  const body = wrap.querySelector('#tabBody');
+  if(state.adminTab==='stores') body.appendChild(await adminStores(cfg, stores));
+  if(state.adminTab==='participants') body.appendChild(await adminParticipants(cfg, stores));
+  if(state.adminTab==='achievers') body.appendChild(await adminAchievers(cfg));
+  if(state.adminTab==='settings') body.appendChild(adminSettings(cfg));
+  return wrap;
+}
+
+async function adminStores(cfg, stores){
+  const wrap = el('<div></div>');
+  if(state.editingStore){
+    const s = stores.find(x=>x.id===state.editingStore) || {id:'', name:'', icon:'turtle', code:'', photo:'', address:'', hours:'', homepage:'', instagram:'', coupon:''};
+    const isNew = !stores.find(x=>x.id===state.editingStore);
+    wrap.innerHTML = `
+    <div class="card">
+      <h2 class="section-title">${isNew?'➕ 店舗を追加':'✏️ 店舗を編集'}</h2>
+      <label>店舗ID（英数字・重複不可）</label><input id="f_id" value="${s.id}" ${isNew?'':'disabled'}>
+      <label>店舗名</label><input id="f_name" value="${s.name}">
+      <label>割り当てる生き物</label>
+      <select id="f_icon">${ICON_KEYS.map(k=>`<option value="${k}" ${s.icon===k?'selected':''}>${ICON_LABELS[k]}</option>`).join('')}</select>
+      <label>発見用の4桁コード（お店に掲示）</label><input id="f_code" value="${s.code||''}" maxlength="4">
+      <label>写真URL</label><input id="f_photo" value="${s.photo}">
+      <label>住所</label><input id="f_address" value="${s.address}">
+      <label>営業時間</label><input id="f_hours" value="${s.hours}">
+      <label>ホームページURL</label><input id="f_homepage" value="${s.homepage}">
+      <label>Instagram URL</label><input id="f_instagram" value="${s.instagram}">
+      <label>クーポン情報</label><input id="f_coupon" value="${s.coupon}">
+      <button class="btn btn-primary" id="save">保存する</button>
+      <button class="btn btn-ghost" id="cancel">キャンセル</button>
+    </div>`;
+    wrap.querySelector('#cancel').onclick = ()=>{ state.editingStore=null; render(); };
+    wrap.querySelector('#save').onclick = async ()=>{
+      const newS = {
+        id: wrap.querySelector('#f_id').value.trim(),
+        name: wrap.querySelector('#f_name').value.trim(),
+        icon: wrap.querySelector('#f_icon').value,
+        code: wrap.querySelector('#f_code').value.trim(),
+        photo: wrap.querySelector('#f_photo').value.trim(),
+        address: wrap.querySelector('#f_address').value.trim(),
+        hours: wrap.querySelector('#f_hours').value.trim(),
+        homepage: wrap.querySelector('#f_homepage').value.trim(),
+        instagram: wrap.querySelector('#f_instagram').value.trim(),
+        coupon: wrap.querySelector('#f_coupon').value.trim(),
+      };
+      if(!newS.id || !newS.name){ alert('店舗IDと店舗名は必須です'); return; }
+      try{
+        await saveStoreDB(newS);
+      }catch(e){ alert('保存に失敗しました。もう一度お試しください。'); return; }
+      state.editingStore=null;
+      if(isNew){ state.justAddedStoreId = newS.id; }
+      render();
+    };
+    return wrap;
+  }
+  const rows = stores.map(s=>`
+    <tr>
+      <td>${s.name}</td><td>${s.id}</td>
+      <td><button class="link-btn" data-edit="${s.id}">編集</button></td>
+      <td><button class="link-btn" data-qr="${s.id}" style="color:#8EC0CF;">QR</button></td>
+      <td><button class="link-btn" data-del="${s.id}" style="color:#C0555F;">削除</button></td>
+    </tr>`).join('');
+  wrap.innerHTML = `
+  <div class="card">
+    <h2 class="section-title">🏪 店舗一覧（${stores.length}件）</h2>
+    <table class="admin-table"><thead><tr><th>店舗名</th><th>ID</th><th></th><th></th><th></th></tr></thead><tbody>${rows}</tbody></table>
+    <button class="btn btn-primary" id="addNew" style="margin-top:14px;">＋ 新しい店舗を追加</button>
+  </div>
+  <div id="qrArea"></div>
+  `;
+  wrap.querySelector('#addNew').onclick = ()=>{ state.editingStore='__new__'+Date.now(); render(); };
+  wrap.querySelectorAll('[data-edit]').forEach(b=> b.onclick = ()=>{ state.editingStore=b.dataset.edit; render(); });
+  wrap.querySelectorAll('[data-del]').forEach(b=> b.onclick = async ()=>{
+    if(!confirm('この店舗を削除しますか？')) return;
+    await deleteStoreDB(b.dataset.del);
+    render();
+  });
+  wrap.querySelectorAll('[data-qr]').forEach(b=> b.onclick = ()=> showQr(b.dataset.qr, wrap.querySelector('#qrArea')));
+  if(state.justAddedStoreId){
+    const newId = state.justAddedStoreId;
+    state.justAddedStoreId = null;
+    showQr(newId, wrap.querySelector('#qrArea'), `<div class="small-note" style="text-align:center;margin-bottom:8px;">🎉 新しい店舗を追加しました。QRコードを自動生成しました。</div>`);
+  }
+  return wrap;
+}
+
+function showQr(storeId, container, extraNote){
+  container.innerHTML = `${extraNote||''}<div class="qr-box"><div id="qrcanvas"></div>
+    <div class="small-note">店舗「${storeId}」用QRコード。印刷するか、スマホやタブレットの画面に表示して掲示してください。</div>
+    <button class="btn btn-secondary" id="dlQr" style="margin-top:10px;">画像として保存する</button>
+  </div>`;
+  const url = location.href.split('?')[0] + '?store=' + storeId;
+  new QRCode(container.querySelector('#qrcanvas'), {text:url, width:200, height:200});
+  container.querySelector('#dlQr').onclick = ()=>{
+    setTimeout(()=>{
+      const canvas = container.querySelector('#qrcanvas canvas');
+      if(!canvas) return;
+      const link = document.createElement('a');
+      link.download = 'malia-qr-'+storeId+'.png';
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+    }, 100);
+  };
+}
+
+async function adminParticipants(cfg, stores){
+  const wrap = el('<div class="card"></div>');
+  const { data: parts, error } = await sb.from('participants').select('id,nickname');
+  if(error || !parts || parts.length===0){
+    wrap.innerHTML = `<h2 class="section-title">👨‍👩‍👧 参加者一覧</h2><p>まだ参加者がいません。</p>`;
+    return wrap;
+  }
+  const { data: stampRows } = await sb.from('participant_stamps').select('participant_id,store_id');
+  const list = parts.map(p=>({
+    nickname:p.nickname,
+    stamps:(stampRows||[]).filter(s=>s.participant_id===p.id).map(s=>s.store_id)
+  }));
+  const rows = list.map(p=>`<tr><td>${p.nickname}</td><td>${p.stamps.length}/${cfg.requiredStamps}</td><td>${p.stamps.join(', ')}</td></tr>`).join('');
+  wrap.innerHTML = `
+  <h2 class="section-title">👨‍👩‍👧 参加者一覧（${list.length}人）</h2>
+  <table class="admin-table"><thead><tr><th>ニックネーム</th><th>取得数</th><th>取得店舗</th></tr></thead><tbody>${rows}</tbody></table>`;
+  return wrap;
+}
+
+async function adminAchievers(cfg){
+  const wrap = el('<div class="card"></div>');
+  const { data, error } = await sb.from('achievements').select('*').order('achieved_at', {ascending:false});
+  const list = (error || !data) ? [] : data.map(a=>({number:a.number, nickname:a.nickname, stampCount:a.stamp_count, achievedAt:a.achieved_at}));
+  wrap.innerHTML = `
+  <h2 class="section-title">🏆 達成者一覧（${list.length}人）</h2>
+  <label>達成番号で検索</label>
+  <input type="text" id="search" placeholder="例）MALIA-2026-000001">
+  <div id="results"></div>
+  `;
+  function renderList(items){
+    const rows = items.map(a=>{
+      const dt = new Date(a.achievedAt);
+      const dtStr = dt.getFullYear()+'/'+(dt.getMonth()+1)+'/'+dt.getDate()+' '+String(dt.getHours()).padStart(2,'0')+':'+String(dt.getMinutes()).padStart(2,'0');
+      return `<tr><td>${a.number}</td><td>${a.nickname}</td><td>${a.stampCount}</td><td>${dtStr}</td></tr>`;
+    }).join('');
+    return `<table class="admin-table"><thead><tr><th>達成番号</th><th>ニックネーム</th><th>数</th><th>達成日時</th></tr></thead><tbody>${rows}</tbody></table>`;
+  }
+  wrap.querySelector('#results').innerHTML = renderList(list);
+  wrap.querySelector('#search').oninput = (e)=>{
+    const q = e.target.value.trim().toLowerCase();
+    const filtered = q? list.filter(a=>a.number.toLowerCase().includes(q)) : list;
+    wrap.querySelector('#results').innerHTML = renderList(filtered);
+  };
+  return wrap;
+}
+
+function adminSettings(cfg){
+  const wrap = el('<div class="card"></div>');
+  wrap.innerHTML = `
+  <h2 class="section-title">⚙️ キャンペーン設定</h2>
+  <label>キャンペーン名</label><input id="s_name" value="${cfg.campaignName}">
+  <label>達成に必要なスタンプ数</label><input type="number" id="s_req" value="${cfg.requiredStamps}">
+  <label>開始日</label><input type="date" id="s_start" value="${cfg.startDate}">
+  <label>終了日</label><input type="date" id="s_end" value="${cfg.endDate}">
+  <label>管理者メールアドレス</label><input id="s_email" value="${cfg.adminEmail}">
+  <label>管理者パスワード</label><input id="s_pw" value="${cfg.adminPassword}">
+  <label>Malia公式LINE URL</label><input id="s_line" value="${cfg.lineUrl}">
+  <label>Instagram URL</label><input id="s_insta" value="${cfg.instagramUrl}">
+  <label>問い合わせメールアドレス</label><input id="s_contact" value="${cfg.contactEmail}">
+  <label>スクリーンショット送付方法</label>
+  <div style="margin-bottom:12px;">
+    <label style="display:inline;"><input type="checkbox" id="m_line" ${cfg.sendMethods.line?'checked':''}> LINE</label>&nbsp;&nbsp;
+    <label style="display:inline;"><input type="checkbox" id="m_insta" ${cfg.sendMethods.instagram?'checked':''}> Instagram</label>&nbsp;&nbsp;
+    <label style="display:inline;"><input type="checkbox" id="m_email" ${cfg.sendMethods.email?'checked':''}> メール</label>
+  </div>
+  <button class="btn btn-primary" id="saveSettings">設定を保存する</button>
+  <div id="savedMsg" style="display:none;color:#4CAF7D;font-weight:700;margin-top:8px;">✔ 保存しました</div>
+  `;
+  wrap.querySelector('#saveSettings').onclick = async ()=>{
+    const newCfg = {
+      campaignName: wrap.querySelector('#s_name').value,
+      requiredStamps: parseInt(wrap.querySelector('#s_req').value)||5,
+      startDate: wrap.querySelector('#s_start').value,
+      endDate: wrap.querySelector('#s_end').value,
+      adminEmail: wrap.querySelector('#s_email').value,
+      adminPassword: wrap.querySelector('#s_pw').value,
+      lineUrl: wrap.querySelector('#s_line').value,
+      instagramUrl: wrap.querySelector('#s_insta').value,
+      contactEmail: wrap.querySelector('#s_contact').value,
+      sendMethods:{
+        line: wrap.querySelector('#m_line').checked,
+        instagram: wrap.querySelector('#m_insta').checked,
+        email: wrap.querySelector('#m_email').checked,
+      }
+    };
+    await saveConfigDB(newCfg);
+    wrap.querySelector('#savedMsg').style.display='block';
+  };
+  return wrap;
+}
+
+/* =============== URLパラメータでQRコード読み取りを再現 =============== */
+(async function init(){
+  if(!SUPABASE_CONFIGURED){
+    document.getElementById('app').innerHTML = `
+      <div style="padding:60px 24px;text-align:center;">
+        <div style="font-size:40px;margin-bottom:14px;">🔧</div>
+        <h2 style="margin-bottom:10px;">Supabaseの接続設定がまだです</h2>
+        <p style="font-size:13.5px;color:var(--ink-soft);line-height:1.7;">
+          このファイルの中にある<br>SUPABASE_URL と SUPABASE_ANON_KEY を、<br>ご自身のSupabaseプロジェクトの値に書き換えてください。
+        </p>
+      </div>`;
+    return;
+  }
+  const params = new URLSearchParams(location.search);
+  const storeParam = params.get('store');
+  await boot();
+  if(storeParam){
+    const stores = await getStoresDB();
+    if(stores.find(s=>s.id===storeParam)){
+      if(!state.participant){ state.pendingStoreId = storeParam; go('join'); }
+      else{ go('codeInput', {currentStoreId:storeParam, codeError:''}); }
+    }
+  }
+})();
+</script>
+</body>
+</html>
