@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>Malia おでかけスタンプラリー</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700;900&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700;900&family=Noto+Sans+JP:wght@400;500;700&family=Noto+Serif+JP:wght@700;900&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jsQR/1.4.0/jsQR.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
@@ -110,6 +110,82 @@ label{font-size:12.5px;color:var(--ink-soft);font-weight:700;display:block;margi
 .rare-starry svg{filter:brightness(.85) saturate(1.6) drop-shadow(0 0 6px rgba(120,120,255,.6));}
 .rare-legendary svg{filter:saturate(1.8) drop-shadow(0 0 8px rgba(191,160,224,.7));}
 .rare-locked svg{filter:grayscale(1) opacity(.4);}
+
+/* ガチャ機風ボタン */
+.btn-gacha{
+  display:flex; align-items:center; justify-content:center; gap:10px;
+  width:100%; padding:16px; border:none; border-radius:20px; cursor:pointer;
+  background:linear-gradient(135deg,#FFD873,var(--pink)); color:#fff; font-weight:900; font-size:15.5px;
+  box-shadow:0 8px 18px rgba(255,152,104,.4); font-family:inherit;
+  transition:transform .12s ease;
+}
+.btn-gacha:active{transform:scale(.96);}
+.btn-gacha .gacha-machine{font-size:26px; position:relative; display:inline-block; filter:drop-shadow(0 2px 3px rgba(0,0,0,.15));}
+.btn-gacha .gacha-handle{position:absolute; top:-10px; right:-14px; font-size:15px; display:inline-block; transform-origin:70% 90%;}
+.btn-gacha:hover .gacha-handle{animation:gachaHandleWiggle .5s ease;}
+@keyframes gachaHandleWiggle{0%{transform:rotate(0deg);}30%{transform:rotate(-25deg);}70%{transform:rotate(15deg);}100%{transform:rotate(0deg);}}
+.btn-gacha.spinning .gacha-machine{animation:gachaSpin .6s linear infinite;}
+@keyframes gachaSpin{0%{transform:rotate(0deg);}100%{transform:rotate(360deg);}}
+
+/* ガチャマシンのイラストと演出(ガチャ画面本体) */
+.gm-scene{ position:relative; display:flex; flex-direction:column; align-items:center; padding:10px 0 4px; min-height:230px; justify-content:center; }
+.gm-machine{ width:170px; height:auto; }
+.gm-machine.shake{ animation: gmShake .6s ease; }
+@keyframes gmShake{ 0%,100%{transform:translateX(0);} 20%{transform:translateX(-4px) rotate(-1deg);} 40%{transform:translateX(4px) rotate(1deg);} 60%{transform:translateX(-3px) rotate(-1deg);} 80%{transform:translateX(3px) rotate(1deg);} }
+.gm-handle{ transform-origin:158px 176px; }
+.gm-machine.handle-spin .gm-handle{ animation: gmHandleSpin .6s ease; }
+@keyframes gmHandleSpin{ from{transform:rotate(0deg);} to{transform:rotate(360deg);} }
+.gm-capsule-out{ position:relative; width:36px; height:36px; margin-top:-6px; display:none; }
+.gm-capsule-out.drop{ display:block; animation: gmDrop .5s ease forwards; }
+@keyframes gmDrop{ 0%{opacity:0; transform:translateY(-10px) scale(.6);} 60%{opacity:1; transform:translateY(6px) scale(1.05);} 100%{opacity:1; transform:translateY(0) scale(1);} }
+.gm-capsule-half{ position:absolute; left:0; width:36px; height:18px; }
+.gm-capsule-half.top{ top:0; border-radius:18px 18px 0 0; background:#FF9868; }
+.gm-capsule-half.bottom{ bottom:0; border-radius:0 0 18px 18px; background:#FFD873; }
+.gm-capsule-out.open .gm-capsule-half.top{ animation: gmOpenTop .4s ease forwards; }
+.gm-capsule-out.open .gm-capsule-half.bottom{ animation: gmOpenBottom .4s ease forwards; }
+@keyframes gmOpenTop{ to{ transform:translateY(-24px) rotate(-25deg); opacity:0; } }
+@keyframes gmOpenBottom{ to{ transform:translateY(24px) rotate(25deg); opacity:0; } }
+.btn-gacha2{
+  display:block; width:100%; padding:16px; border:none; border-radius:16px; cursor:pointer;
+  background:linear-gradient(135deg,var(--pink-deep),var(--pink)); color:#fff; font-weight:900; font-size:15.5px;
+  box-shadow:0 8px 18px rgba(255,122,69,.35); font-family:inherit; transition:transform .12s ease;
+}
+.btn-gacha2:active{ transform:scale(.96); }
+
+/* 賞状風 認定証（背景画像＋重ね文字） */
+.cert4-wrap{ padding:6px 0 4px; }
+.cert4-frame{ position:relative; width:100%; line-height:0; cursor:zoom-in; transition:transform .25s ease, box-shadow .25s ease; }
+.cert4-bg{ width:100%; height:auto; display:block; }
+.cert4-overlay{ position:absolute; top:0; left:0; right:0; bottom:0; font-family:'Noto Serif JP',serif; color:#2b2420; }
+.cert4-title{ position:absolute; top:25.5%; left:0; right:0; text-align:center; font-weight:900; letter-spacing:2px; color:#3a2a1a; font-size:2.6em; }
+.cert4-sub{ position:absolute; top:32.5%; left:0; right:0; text-align:center; letter-spacing:1px; color:#5b4a2a; font-family:'Zen Kaku Gothic New',sans-serif; font-size:1em; }
+.cert4-name{ position:absolute; top:38%; left:0; right:0; text-align:center; font-weight:900; color:#2b2420; font-family:'Zen Kaku Gothic New',sans-serif; font-size:2em; }
+.cert4-name .honor{ font-size:.55em; margin-left:6px; color:#5b5044; }
+.cert4-body{ position:absolute; top:48.5%; left:15%; right:15%; text-align:center; color:#3a3226; font-size:1.6em; line-height:2.3; }
+.cert4-meta{ position:absolute; top:76.5%; left:15%; right:15%; text-align:center; color:#4a4030; font-family:'Zen Kaku Gothic New',sans-serif; white-space:nowrap; font-size:1.25em; }
+.cert4-meta .sep{ opacity:.5; margin:0 5px;}
+body.cert-zoomed{ overflow:hidden; }
+body.cert-zoomed::before{ content:''; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(20,15,10,.65); z-index:998; }
+body.cert-zoomed .cert4-frame{
+  position:fixed; top:50%; left:50%; transform:translate(-50%,-50%);
+  width:92vw; max-width:640px; z-index:999; box-shadow:0 12px 44px rgba(0,0,0,.45); cursor:zoom-out;
+}
+
+/* レア生きもの登場演出 */
+.gacha-reveal{position:relative; display:inline-block; padding-top:10px;}
+.gacha-glow{
+  position:absolute; top:0; left:50%; width:170px; height:170px; transform:translateX(-50%);
+  background:radial-gradient(circle, rgba(255,211,120,.6) 0%, rgba(255,211,120,0) 70%);
+  animation:glowPulse 1.8s ease-out 1;
+}
+.rare-pop svg{animation:rarePop 1.4s cubic-bezier(.34,1.56,.64,1) forwards;}
+@keyframes rarePop{
+  0%{opacity:0; transform:scale(.4) translateY(14px);}
+  55%{opacity:1; transform:scale(1.12) translateY(-4px);}
+  75%{transform:scale(.96) translateY(0);}
+  100%{opacity:1; transform:scale(1) translateY(0);}
+}
+.rare-name-pop{animation:fadeIn .6s ease .5s both;}
 
 .remain-banner{
   text-align:center;padding:16px;border-radius:16px;font-weight:900;font-size:16px;
@@ -815,8 +891,8 @@ async function screenGotStamp(cfg, stores){
     ${msg? `<div class="remain-banner ${msg.final?'final':''}" style="margin-top:16px;"><div style="font-size:13px;font-weight:700;">${msg.overview}</div><div style="margin-top:4px;">${msg.tier}</div></div>`:''}
   </div>
   ${p.stamps.length===1? `<div class="card" style="text-align:center;margin-top:14px;"><div style="font-weight:700;">🎁 参加賞をゲット！</div><div class="small-note">図鑑画面から「ぬりえPDF」を開けます</div></div>`:''}
-  ${p.stamps.length===3? `<div class="card" style="text-align:center;margin-top:14px;"><div style="font-weight:700;">✨ レア生きものガチャが解放されました！</div><button class="btn btn-primary" id="toGacha3" style="margin-top:10px;">ガチャを回す</button></div>`:''}
-  ${p.stamps.length===5? `<div class="card" style="text-align:center;margin-top:14px;"><div style="font-weight:700;">✨ 2回目のレア生きものガチャが解放されました！</div><button class="btn btn-primary" id="toGacha5" style="margin-top:10px;">ガチャを回す</button></div>`:''}
+  ${p.stamps.length===3? `<div class="card" style="text-align:center;margin-top:14px;"><div style="font-weight:700;">✨ レア生きものガチャが解放されました！</div><button class="btn-gacha" id="toGacha3" style="margin-top:10px;"><span class="gacha-machine">🟠<span class="gacha-handle">🕹️</span></span><span class="gacha-label">ガチャを回す！</span></button></div>`:''}
+  ${p.stamps.length===5? `<div class="card" style="text-align:center;margin-top:14px;"><div style="font-weight:700;">✨ 2回目のレア生きものガチャが解放されました！</div><button class="btn-gacha" id="toGacha5" style="margin-top:10px;"><span class="gacha-machine">🟠<span class="gacha-handle">🕹️</span></span><span class="gacha-label">ガチャを回す！</span></button></div>`:''}
   <button class="btn btn-primary" id="toCard">図鑑にもどる</button>
   `;
   const g3 = wrap.querySelector('#toGacha3'); if(g3) g3.onclick = ()=> go('gacha', {gachaStage:3});
@@ -838,7 +914,7 @@ async function screenRareCollection(cfg){
       return `<div class="card" style="text-align:center;"><div class="rare-icon rare-locked">${mysteryIconSVG(56)}</div><div style="margin-top:8px;font-weight:700;color:var(--ink-soft);">${stage}個達成で解放</div></div>`;
     }
     if(!result){
-      return `<div class="card" style="text-align:center;"><div style="font-weight:700;margin-bottom:10px;">✨ ${stage===3?'1':'2'}回目のレア生きものガチャが解放されました！</div><button class="btn btn-primary" id="gachaBtn${stage}">ガチャを回す</button></div>`;
+      return `<div class="card" style="text-align:center;"><div style="font-weight:700;margin-bottom:10px;">✨ ${stage===3?'1':'2'}回目のレア生きものガチャが解放されました！</div><button class="btn-gacha" id="gachaBtn${stage}"><span class="gacha-machine">🟠<span class="gacha-handle">🕹️</span></span><span class="gacha-label">レア生きものガチャを回す！</span></button></div>`;
     }
     const m = RARE_ICON_MAP[result];
     return `<div class="card" style="text-align:center;"><div class="rare-icon ${m?m.cls:''}">${rareIconSVG(result,70)}</div><div style="margin-top:8px;font-weight:900;">${result}</div></div>`;
@@ -861,15 +937,24 @@ async function screenGacha(cfg){
   const stage = state.gachaStage;
   const wrap = el('<div class="screen"></div>');
   const existing = await getGachaResult(stage);
+  function resultHtml(creature, note){
+    const m = RARE_ICON_MAP[creature];
+    return `
+      <div class="gacha-reveal">
+        ${['✨','⭐','💫','✨','⭐'].map((sp,i)=>`<span class="sparkle" style="left:${8+i*20}%;top:${i%2===0?0:14}px;animation-delay:${i*0.12}s;">${sp}</span>`).join('')}
+        <div class="gacha-glow"></div>
+        <div class="rare-icon ${m?m.cls:''} rare-pop" style="margin:10px 0;">${rareIconSVG(creature,90)}</div>
+      </div>
+      <div style="font-weight:900;font-size:17px;" class="rare-name-pop">${creature}</div>
+      <div class="small-note">${note}</div>
+      <button class="btn btn-primary" id="toCollection" style="margin-top:16px;">コレクションを見る</button>
+    `;
+  }
   if(existing){
-    const m = RARE_ICON_MAP[existing];
     wrap.innerHTML = `
     <div class="card" style="text-align:center;">
       <h2 class="section-title" style="justify-content:center;">✨ ${stage===3?'1':'2'}回目のレア生きもの</h2>
-      <div class="rare-icon ${m?m.cls:''}" style="margin:10px 0;">${rareIconSVG(existing,90)}</div>
-      <div style="font-weight:900;font-size:17px;">${existing}</div>
-      <div class="small-note">すでに引いた結果です</div>
-      <button class="btn btn-primary" id="toCollection" style="margin-top:16px;">コレクションを見る</button>
+      ${resultHtml(existing, 'すでに引いた結果です')}
     </div>`;
     wrap.querySelector('#toCollection').onclick = ()=> go('rareCollection');
     return wrap;
@@ -877,31 +962,65 @@ async function screenGacha(cfg){
   wrap.innerHTML = `
   <div class="card" style="text-align:center;">
     <h2 class="section-title" style="justify-content:center;">🎰 ${stage===3?'1':'2'}回目のレア生きものガチャ</h2>
-    <div id="gachaArea">
-      <p style="font-size:13px;color:var(--ink-soft);">ボタンを押すと、レアな生き物が1匹決まります(1回だけ引けます)</p>
-      <button class="btn btn-primary" id="drawBtn">ガチャを回す</button>
+    <div class="gm-scene">
+      <svg class="gm-machine" id="gmMachine" viewBox="0 0 200 220">
+        <rect x="40" y="150" width="120" height="52" rx="8" fill="#EAF7FA" stroke="#17AFC2" stroke-width="4"/>
+        <rect x="55" y="118" width="12" height="22" fill="#EAF7FA" stroke="#17AFC2" stroke-width="4"/>
+        <rect x="133" y="118" width="12" height="22" fill="#EAF7FA" stroke="#17AFC2" stroke-width="4"/>
+        <circle cx="100" cy="88" r="62" fill="#EAF7FA" fill-opacity="0.55" stroke="#17AFC2" stroke-width="5"/>
+        <circle cx="78" cy="70" r="12" fill="#FFB199"/>
+        <circle cx="108" cy="60" r="10" fill="#4FD5E3"/>
+        <circle cx="128" cy="85" r="11" fill="#FFD873"/>
+        <circle cx="90" cy="100" r="10" fill="#FF9868"/>
+        <circle cx="118" cy="108" r="9" fill="#BFE3EE"/>
+        <circle cx="70" cy="105" r="8" fill="#FFC33D"/>
+        <rect x="82" y="165" width="36" height="16" rx="3" fill="#fff" stroke="#17AFC2" stroke-width="3"/>
+        <rect x="52" y="160" width="14" height="5" rx="2" fill="#17AFC2"/>
+        <g class="gm-handle">
+          <circle cx="158" cy="176" r="11" fill="#FF9868" stroke="#17AFC2" stroke-width="3"/>
+          <rect x="146" y="173" width="24" height="6" rx="3" fill="#17AFC2"/>
+        </g>
+      </svg>
+      <div class="gm-capsule-out" id="gmCapsuleOut">
+        <div class="gm-capsule-half top"></div>
+        <div class="gm-capsule-half bottom"></div>
+      </div>
+      <div id="gachaArea" style="display:none;"></div>
     </div>
+    <p class="small-note" id="gachaHint">ボタンを押すと、レアな生き物が1匹決まります(1回だけ引けます)</p>
+    <button class="btn-gacha2" id="drawBtn">ガチャを回す！</button>
     <button class="btn btn-ghost" id="back" style="margin-top:10px;">あとで引く</button>
   </div>`;
   wrap.querySelector('#back').onclick = ()=> go('card');
-  wrap.querySelector('#drawBtn').onclick = async ()=>{
+  wrap.querySelector('#drawBtn').onclick = ()=>{
     const drawBtn = wrap.querySelector('#drawBtn');
-    drawBtn.disabled = true; drawBtn.textContent = '抽選中…';
-    try{
-      const res = await drawGachaDB(stage);
-      const m = RARE_ICON_MAP[res.creature];
-      wrap.querySelector('#gachaArea').innerHTML = `
-        <div class="rare-icon ${m?m.cls:''}" style="margin:10px 0;">${rareIconSVG(res.creature,90)}</div>
-        <div style="font-weight:900;font-size:17px;">${res.creature}</div>
-        <div class="small-note">${res.alreadyDrawn?'すでに引いた結果を表示しています':'おめでとうございます！'}</div>
-        <button class="btn btn-primary" id="toCollection" style="margin-top:16px;">コレクションを見る</button>
-      `;
-      wrap.querySelector('#toCollection').onclick = ()=> go('rareCollection');
-    }catch(e){
-      console.error('draw failed', e);
-      wrap.querySelector('#gachaArea').innerHTML = `<div class="err-msg">保存に失敗しました。もう一度お試しください。</div><button class="btn btn-primary" id="retryDraw">もう一度試す</button>`;
-      wrap.querySelector('#retryDraw').onclick = ()=> go('gacha', {gachaStage:stage});
-    }
+    drawBtn.disabled = true;
+    const machine = wrap.querySelector('#gmMachine');
+    machine.classList.add('shake','handle-spin');
+    setTimeout(()=>{
+      const cap = wrap.querySelector('#gmCapsuleOut');
+      cap.classList.add('drop');
+      setTimeout(()=>{
+        cap.classList.add('open');
+        setTimeout(async ()=>{
+          cap.style.display = 'none';
+          machine.style.display = 'none';
+          wrap.querySelector('#gachaHint').style.display = 'none';
+          drawBtn.style.display = 'none';
+          const gachaArea = wrap.querySelector('#gachaArea');
+          gachaArea.style.display = 'block';
+          try{
+            const res = await drawGachaDB(stage);
+            gachaArea.innerHTML = resultHtml(res.creature, res.alreadyDrawn?'すでに引いた結果を表示しています':'おめでとうございます！');
+            gachaArea.querySelector('#toCollection').onclick = ()=> go('rareCollection');
+          }catch(e){
+            console.error('draw failed', e);
+            gachaArea.innerHTML = `<div class="err-msg">保存に失敗しました。もう一度お試しください。</div><button class="btn btn-primary" id="retryDraw">もう一度試す</button>`;
+            gachaArea.querySelector('#retryDraw').onclick = ()=> go('gacha', {gachaStage:stage});
+          }
+        }, 450);
+      }, 550);
+    }, 650);
   };
   return wrap;
 }
@@ -986,21 +1105,47 @@ async function screenCertificate(cfg){
     return wrap;
   }
   const dt = new Date(ach.achievedAt);
-  const dtStr = dt.getFullYear()+'/'+(dt.getMonth()+1)+'/'+dt.getDate();
+  const dtStr = dt.getFullYear()+'年'+(dt.getMonth()+1)+'月'+dt.getDate()+'日';
   wrap.innerHTML = `
-  <div class="card" id="certCard" style="text-align:center;background:linear-gradient(180deg,#FFF9E5,#E9F9FB);">
-    <div style="font-size:12px;color:var(--ink-soft);letter-spacing:2px;">DIGITAL CERTIFICATE</div>
-    <div style="font-size:18px;font-weight:900;margin:10px 0;">湘南の夏 生きもの図鑑 認定証</div>
-    <div style="font-size:15px;font-weight:700;">${ach.nickname} さん</div>
-    <div style="font-size:13px;margin-top:10px;">6つの生きものを見つけました</div>
-    <div style="font-size:12px;color:var(--ink-soft);margin-top:14px;">達成日：${dtStr}</div>
-    <div style="font-size:12px;color:var(--ink-soft);">達成番号：${ach.number}</div>
-    <div style="font-size:12px;color:var(--ink-soft);margin-top:6px;">${cfg.campaignName}</div>
+  <div class="cert4-wrap">
+    <div class="cert4-frame" id="certCard4">
+      <img class="cert4-bg" src="cert-bg.png" alt="賞状背景">
+      <div class="cert4-overlay">
+        <div class="cert4-title">にんていしょう</div>
+        <div class="cert4-sub">${cfg.campaignName}</div>
+        <div class="cert4-name">${ach.nickname}<span class="honor">さん</span></div>
+        <div class="cert4-body">
+          あなたは Malia おでかけスタンプラリーにおいて<br>
+          6つの生きものをすべて発見し、<br>
+          湘南の夏 生きもの図鑑を見事完成されました。<br>
+          そのがんばりをたたえ、ここに認定します。
+        </div>
+        <div class="cert4-meta">
+          <span>達成日：${dtStr}</span>
+          <span class="sep">｜</span>
+          <span>達成番号：${ach.number}</span>
+        </div>
+      </div>
+    </div>
   </div>
-  <button class="btn btn-primary" id="saveImg">画像として保存する</button>
+  <div class="small-note" style="text-align:center;margin-top:8px;">タップすると拡大して確認できます</div>
+  <button class="btn btn-primary" id="saveImg" style="margin-top:10px;">画像として保存する</button>
   <div id="saveMsg" class="small-note" style="display:none;text-align:center;"></div>
   <button class="btn btn-ghost" id="back">もどる</button>
   `;
+  const certFrame = wrap.querySelector('#certCard4');
+  function sizeCertificate(){
+    if(!certFrame) return;
+    const w = certFrame.offsetWidth;
+    if(!w) return;
+    certFrame.style.fontSize = (w*0.01)+'px';
+  }
+  window.addEventListener('resize', sizeCertificate);
+  const certBgImg = certFrame.querySelector('.cert4-bg');
+  certBgImg.addEventListener('load', sizeCertificate);
+  sizeCertificate();
+  certFrame.addEventListener('click', ()=>{ document.body.classList.toggle('cert-zoomed'); setTimeout(sizeCertificate, 260); });
+
   wrap.querySelector('#back').onclick = ()=> go('card');
   wrap.querySelector('#saveImg').onclick = async ()=>{
     const msgEl = wrap.querySelector('#saveMsg');
@@ -1008,7 +1153,8 @@ async function screenCertificate(cfg){
       if(!window.html2canvas){
         await loadExternalScript('https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js');
       }
-      const canvas = await html2canvas(wrap.querySelector('#certCard'));
+      sizeCertificate();
+      const canvas = await html2canvas(certFrame, {scale:3, useCORS:true, backgroundColor:null});
       const link = document.createElement('a');
       link.download = 'malia-certificate.png';
       link.href = canvas.toDataURL('image/png');
