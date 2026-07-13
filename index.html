@@ -526,10 +526,12 @@ async function screenCard(cfg, stores){
     ${msg ? `<div class="remain-banner ${msg.final?'final':''}"><div style="font-size:13px;font-weight:700;">${msg.overview}</div><div style="margin-top:4px;">${msg.tier}</div></div>` : ''}
     ${gotCount>=cfg.requiredStamps ? `<button class="btn btn-primary" id="toComplete" style="margin-top:14px;">達成画面を見る 🎉</button>` : ''}
   </div>
-  <button class="btn btn-outline-blue" id="scanBtn">📷 QRコードを読み取る</button>
+  <div class="card" style="text-align:center;">
+    <div style="font-size:13.5px;font-weight:700;">📷 スマートフォンの標準カメラを開いて、<br>店頭のQRコードを読み取ってください</div>
+    <div class="small-note" style="margin-top:6px;">iPhone・Androidどちらも、普段お使いのカメラアプリでそのまま読み取れます</div>
+  </div>
   <button class="btn btn-secondary" id="listBtn">🏝️ 店舗一覧を見る</button>
   `;
-  wrap.querySelector('#scanBtn').onclick = ()=> go('scan');
   wrap.querySelector('#listBtn').onclick = ()=> go('storeList',{storeListTarget:'participant'});
   const cb = wrap.querySelector('#toComplete');
   if(cb) cb.onclick = ()=> go('complete');
