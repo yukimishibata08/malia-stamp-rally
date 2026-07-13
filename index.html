@@ -101,6 +101,16 @@ label{font-size:12.5px;color:var(--ink-soft);font-weight:700;display:block;margi
 .icon-wrap.notgot svg{filter:grayscale(1) opacity(.4);}
 .icon-wrap.got svg{filter:drop-shadow(0 3px 6px rgba(38,54,58,.18));}
 
+.rare-icon svg{display:block;margin:0 auto;}
+.rare-gold svg{filter:sepia(1) saturate(5) hue-rotate(-8deg) brightness(1.15) drop-shadow(0 0 6px rgba(255,195,61,.6));}
+.rare-aurora svg{filter:hue-rotate(160deg) saturate(2.4) brightness(1.1) drop-shadow(0 0 6px rgba(143,203,219,.6));}
+.rare-jewel svg{filter:saturate(2.2) brightness(1.05) drop-shadow(0 0 6px rgba(255,105,180,.5));}
+.rare-rainbow svg{animation:rareRainbow 3s linear infinite; filter:saturate(2.5) drop-shadow(0 0 6px rgba(255,255,255,.6));}
+@keyframes rareRainbow{0%{filter:hue-rotate(0deg) saturate(2.5);}100%{filter:hue-rotate(360deg) saturate(2.5);}}
+.rare-starry svg{filter:brightness(.85) saturate(1.6) drop-shadow(0 0 6px rgba(120,120,255,.6));}
+.rare-legendary svg{filter:saturate(1.8) drop-shadow(0 0 8px rgba(191,160,224,.7));}
+.rare-locked svg{filter:grayscale(1) opacity(.4);}
+
 .remain-banner{
   text-align:center;padding:16px;border-radius:16px;font-weight:900;font-size:16px;
   background:linear-gradient(135deg,#FFF3D0,#D6F7F5);color:var(--pink-deep);margin-top:16px;
@@ -251,6 +261,32 @@ async function createParticipantDB(nickname){
   return { id:data.id, nickname:data.nickname, stamps:[] };
 }
 
+/* ---- レア生きものガチャ（rare_gacha_results テーブルのみ使用） ---- */
+async function getGachaResult(stage){
+  if(!state.participant) return null;
+  try{
+    const { data, error } = await sb.from('rare_gacha_results').select('creature').eq('participant_id', state.participant.id).eq('stage', stage).maybeSingle();
+    if(error || !data) return null;
+    return data.creature;
+  }catch(e){ console.error('getGachaResult failed', e); return null; }
+}
+async function drawGachaDB(stage){
+  const participantId = state.participant.id;
+  let excluded = null;
+  if(stage===5){ excluded = await getGachaResult(3); }
+  const pool = excluded ? RARE_CREATURES.filter(c=>c!==excluded) : RARE_CREATURES;
+  const pick = pool[Math.floor(Math.random()*pool.length)];
+  const { error } = await sb.from('rare_gacha_results').insert({participant_id:participantId, stage, creature:pick});
+  if(error){
+    if(error.code==='23505'){
+      const existing = await getGachaResult(stage);
+      return { creature: existing, alreadyDrawn:true };
+    }
+    throw error;
+  }
+  return { creature: pick, alreadyDrawn:false };
+}
+
 /* 湘南の夏 生きもの図鑑：5種類の生き物イラストと紹介文 */
 const ICON_KEYS = ['turtle','dolphin','crab','starfish','hermit','jellyfish'];
 const ICON_LABELS = {turtle:'🐢 ウミガメ', dolphin:'🐬 イルカ', crab:'🦀 カニ', starfish:'⭐ ヒトデ', hermit:'🐚 ヤドカリ', jellyfish:'🎐 クラゲ'};
@@ -337,6 +373,31 @@ function mysteryIconSVG(size){
   </svg>`;
 }
 
+/* ============ レア生きものガチャ（既存の6種類とは完全に別枠の追加機能） ============ */
+const RARE_CREATURES = ['金色のウミガメ','オーロライルカ','宝石カニ','虹色ヒトデ','星空ヤドカリ','伝説のタツノオトシゴ'];
+const RARE_ICON_MAP = {
+  '金色のウミガメ':     {base:'turtle',   cls:'rare-gold'},
+  'オーロライルカ':     {base:'dolphin',  cls:'rare-aurora'},
+  '宝石カニ':           {base:'crab',     cls:'rare-jewel'},
+  '虹色ヒトデ':         {base:'starfish', cls:'rare-rainbow'},
+  '星空ヤドカリ':       {base:'hermit',   cls:'rare-starry'},
+  '伝説のタツノオトシゴ': {base:'seahorse', cls:'rare-legendary'},
+};
+function seahorseSVG(size){
+  size = size || 40;
+  return `<svg viewBox="0 0 100 100" width="${size}" height="${size}">
+    <path d="M45 10 Q60 10 62 25 Q64 35 55 40 Q68 42 66 55 Q64 68 50 70 Q54 78 48 85 Q42 90 36 85 Q42 82 40 76 Q30 72 30 60 Q30 48 40 44 Q32 38 34 28 Q36 15 45 10 Z" fill="#BFA0E0"/>
+    <circle cx="50" cy="24" r="2.4" fill="#3A2317"/>
+    <path d="M58 30 Q64 32 62 38" stroke="#A985D6" stroke-width="3" fill="none" stroke-linecap="round"/>
+  </svg>`;
+}
+function rareIconSVG(name, size){
+  const m = RARE_ICON_MAP[name];
+  if(!m) return mysteryIconSVG(size);
+  if(m.base==='seahorse') return seahorseSVG(size);
+  return iconSVG(m.base, size);
+}
+
 const DEFAULT_STORES = [
   {id:'A', name:'店舗A', icon:'turtle', code:'1234', photo:'', address:'神奈川県藤沢市○○1-1-1', hours:'10:00〜18:00', homepage:'', instagram:'', coupon:'ご提示で駐車場1時間無料'},
   {id:'B', name:'店舗B', icon:'dolphin', code:'2345', photo:'', address:'神奈川県茅ヶ崎市○○2-2-2', hours:'11:00〜19:00', homepage:'', instagram:'', coupon:'ドリンク1杯無料'},
@@ -367,6 +428,7 @@ const state = {
   achievementInfo:null,
   admin:false,
   adminTab:'stores',
+  gachaStage:null,
   editingStore:null,
   toast:null,
   storeListTarget:null,
@@ -436,6 +498,9 @@ async function renderScreen(){
   if(state.screen==='codeInput') return screenCodeInput(cfg, stores);
   if(state.screen==='gotStamp') return await screenGotStamp(cfg, stores);
   if(state.screen==='complete') return await screenComplete(cfg);
+  if(state.screen==='rareCollection') return await screenRareCollection(cfg);
+  if(state.screen==='gacha') return await screenGacha(cfg);
+  if(state.screen==='certificate') return await screenCertificate(cfg);
   if(state.screen==='adminLogin') return screenAdminLogin(cfg);
   if(state.screen==='adminHome') return await screenAdminHome(cfg, stores);
   return el('<div>画面がありません</div>');
@@ -526,6 +591,13 @@ async function screenCard(cfg, stores){
     ${msg ? `<div class="remain-banner ${msg.final?'final':''}"><div style="font-size:13px;font-weight:700;">${msg.overview}</div><div style="margin-top:4px;">${msg.tier}</div></div>` : ''}
     ${gotCount>=cfg.requiredStamps ? `<button class="btn btn-primary" id="toComplete" style="margin-top:14px;">達成画面を見る 🎉</button>` : ''}
   </div>
+  ${gotCount>=1 ? `
+  <div class="card" style="text-align:center;">
+    <div style="font-weight:700;">🎁 参加賞をゲット！</div>
+    <button class="btn btn-secondary" id="coloringBtn" style="margin-top:10px;">ぬりえPDFを開く</button>
+    <div id="coloringMsg" class="small-note" style="display:none;"></div>
+  </div>` : ''}
+  ${gotCount>=3 ? `<button class="btn btn-outline-blue" id="rareBtn">✨ レア生きものコレクション</button>` : ''}
   <div class="card" style="text-align:center;">
     <div style="font-size:13.5px;font-weight:700;">📷 スマートフォンの標準カメラを開いて、<br>店頭のQRコードを読み取ってください</div>
     <div class="small-note" style="margin-top:6px;">iPhone・Androidどちらも、普段お使いのカメラアプリでそのまま読み取れます</div>
@@ -535,6 +607,17 @@ async function screenCard(cfg, stores){
   wrap.querySelector('#listBtn').onclick = ()=> go('storeList',{storeListTarget:'participant'});
   const cb = wrap.querySelector('#toComplete');
   if(cb) cb.onclick = ()=> go('complete');
+  const rareBtn = wrap.querySelector('#rareBtn');
+  if(rareBtn) rareBtn.onclick = ()=> go('rareCollection');
+  const colBtn = wrap.querySelector('#coloringBtn');
+  if(colBtn) colBtn.onclick = async ()=>{
+    const msgEl = wrap.querySelector('#coloringMsg');
+    try{
+      const res = await fetch('coloring.pdf', {method:'HEAD'});
+      if(res.ok){ window.open('coloring.pdf', '_blank'); }
+      else { msgEl.textContent='ぬりえは準備中です。しばらくお待ちください。'; msgEl.style.display='block'; }
+    }catch(e){ msgEl.textContent='ぬりえは準備中です。しばらくお待ちください。'; msgEl.style.display='block'; }
+  };
   return wrap;
 }
 
@@ -731,10 +814,94 @@ async function screenGotStamp(cfg, stores){
     <p style="font-size:12.5px;color:var(--ink-soft);">湘南の夏 生きもの図鑑に登録されました</p>
     ${msg? `<div class="remain-banner ${msg.final?'final':''}" style="margin-top:16px;"><div style="font-size:13px;font-weight:700;">${msg.overview}</div><div style="margin-top:4px;">${msg.tier}</div></div>`:''}
   </div>
+  ${p.stamps.length===1? `<div class="card" style="text-align:center;margin-top:14px;"><div style="font-weight:700;">🎁 参加賞をゲット！</div><div class="small-note">図鑑画面から「ぬりえPDF」を開けます</div></div>`:''}
+  ${p.stamps.length===3? `<div class="card" style="text-align:center;margin-top:14px;"><div style="font-weight:700;">✨ レア生きものガチャが解放されました！</div><button class="btn btn-primary" id="toGacha3" style="margin-top:10px;">ガチャを回す</button></div>`:''}
+  ${p.stamps.length===5? `<div class="card" style="text-align:center;margin-top:14px;"><div style="font-weight:700;">✨ 2回目のレア生きものガチャが解放されました！</div><button class="btn btn-primary" id="toGacha5" style="margin-top:10px;">ガチャを回す</button></div>`:''}
   <button class="btn btn-primary" id="toCard">図鑑にもどる</button>
   `;
+  const g3 = wrap.querySelector('#toGacha3'); if(g3) g3.onclick = ()=> go('gacha', {gachaStage:3});
+  const g5 = wrap.querySelector('#toGacha5'); if(g5) g5.onclick = ()=> go('gacha', {gachaStage:5});
   wrap.querySelector('#toCard').onclick = ()=>{
     if(p.stamps.length>=cfg.requiredStamps) go('complete'); else go('card');
+  };
+  return wrap;
+}
+
+/* ---------- レア生きものコレクション ---------- */
+async function screenRareCollection(cfg){
+  const wrap = el('<div class="screen"></div>');
+  const gotCount = state.participant ? state.participant.stamps.length : 0;
+  const r3 = gotCount>=3 ? await getGachaResult(3) : null;
+  const r5 = gotCount>=5 ? await getGachaResult(5) : null;
+  function slotHtml(stage, result, unlocked){
+    if(!unlocked){
+      return `<div class="card" style="text-align:center;"><div class="rare-icon rare-locked">${mysteryIconSVG(56)}</div><div style="margin-top:8px;font-weight:700;color:var(--ink-soft);">${stage}個達成で解放</div></div>`;
+    }
+    if(!result){
+      return `<div class="card" style="text-align:center;"><div style="font-weight:700;margin-bottom:10px;">✨ ${stage===3?'1':'2'}回目のレア生きものガチャが解放されました！</div><button class="btn btn-primary" id="gachaBtn${stage}">ガチャを回す</button></div>`;
+    }
+    const m = RARE_ICON_MAP[result];
+    return `<div class="card" style="text-align:center;"><div class="rare-icon ${m?m.cls:''}">${rareIconSVG(result,70)}</div><div style="margin-top:8px;font-weight:900;">${result}</div></div>`;
+  }
+  wrap.innerHTML = `
+  <div class="topbar"><div class="logo">Malia</div><div class="sub">レア生きものコレクション</div></div>
+  <h2 class="section-title" style="padding:0 4px;">✨ レア生きものコレクション</h2>
+  ${slotHtml(3, r3, gotCount>=3)}
+  ${slotHtml(5, r5, gotCount>=5)}
+  <button class="btn btn-ghost" id="back">図鑑にもどる</button>
+  `;
+  const g3 = wrap.querySelector('#gachaBtn3'); if(g3) g3.onclick = ()=> go('gacha', {gachaStage:3});
+  const g5 = wrap.querySelector('#gachaBtn5'); if(g5) g5.onclick = ()=> go('gacha', {gachaStage:5});
+  wrap.querySelector('#back').onclick = ()=> go('card');
+  return wrap;
+}
+
+/* ---------- レア生きものガチャ ---------- */
+async function screenGacha(cfg){
+  const stage = state.gachaStage;
+  const wrap = el('<div class="screen"></div>');
+  const existing = await getGachaResult(stage);
+  if(existing){
+    const m = RARE_ICON_MAP[existing];
+    wrap.innerHTML = `
+    <div class="card" style="text-align:center;">
+      <h2 class="section-title" style="justify-content:center;">✨ ${stage===3?'1':'2'}回目のレア生きもの</h2>
+      <div class="rare-icon ${m?m.cls:''}" style="margin:10px 0;">${rareIconSVG(existing,90)}</div>
+      <div style="font-weight:900;font-size:17px;">${existing}</div>
+      <div class="small-note">すでに引いた結果です</div>
+      <button class="btn btn-primary" id="toCollection" style="margin-top:16px;">コレクションを見る</button>
+    </div>`;
+    wrap.querySelector('#toCollection').onclick = ()=> go('rareCollection');
+    return wrap;
+  }
+  wrap.innerHTML = `
+  <div class="card" style="text-align:center;">
+    <h2 class="section-title" style="justify-content:center;">🎰 ${stage===3?'1':'2'}回目のレア生きものガチャ</h2>
+    <div id="gachaArea">
+      <p style="font-size:13px;color:var(--ink-soft);">ボタンを押すと、レアな生き物が1匹決まります(1回だけ引けます)</p>
+      <button class="btn btn-primary" id="drawBtn">ガチャを回す</button>
+    </div>
+    <button class="btn btn-ghost" id="back" style="margin-top:10px;">あとで引く</button>
+  </div>`;
+  wrap.querySelector('#back').onclick = ()=> go('card');
+  wrap.querySelector('#drawBtn').onclick = async ()=>{
+    const drawBtn = wrap.querySelector('#drawBtn');
+    drawBtn.disabled = true; drawBtn.textContent = '抽選中…';
+    try{
+      const res = await drawGachaDB(stage);
+      const m = RARE_ICON_MAP[res.creature];
+      wrap.querySelector('#gachaArea').innerHTML = `
+        <div class="rare-icon ${m?m.cls:''}" style="margin:10px 0;">${rareIconSVG(res.creature,90)}</div>
+        <div style="font-weight:900;font-size:17px;">${res.creature}</div>
+        <div class="small-note">${res.alreadyDrawn?'すでに引いた結果を表示しています':'おめでとうございます！'}</div>
+        <button class="btn btn-primary" id="toCollection" style="margin-top:16px;">コレクションを見る</button>
+      `;
+      wrap.querySelector('#toCollection').onclick = ()=> go('rareCollection');
+    }catch(e){
+      console.error('draw failed', e);
+      wrap.querySelector('#gachaArea').innerHTML = `<div class="err-msg">保存に失敗しました。もう一度お試しください。</div><button class="btn btn-primary" id="retryDraw">もう一度試す</button>`;
+      wrap.querySelector('#retryDraw').onclick = ()=> go('gacha', {gachaStage:stage});
+    }
   };
   return wrap;
 }
@@ -785,10 +952,73 @@ async function screenComplete(cfg){
         ${cfg.sendMethods.instagram? `<div class="info-line"><span class="ico">📷</span><a href="${cfg.instagramUrl}" target="_blank">Instagram DM</a></div>`:''}
         ${cfg.sendMethods.email? `<div class="info-line"><span class="ico">✉️</span><span>${cfg.contactEmail}</span></div>`:''}
       </div>
+      <button class="btn btn-secondary" id="toCert" style="margin-top:14px;">🎓 デジタル認定証を見る</button>
       <button class="btn btn-secondary" id="backTop" style="margin-top:16px;">トップにもどる</button>
     </div>
   </div>`;
   wrap.querySelector('#backTop').onclick = ()=> go('card');
+  wrap.querySelector('#toCert').onclick = ()=> go('certificate');
+  return wrap;
+}
+
+/* ---------- デジタル認定証 ---------- */
+function loadExternalScript(src){
+  return new Promise((resolve, reject)=>{
+    if(document.querySelector(`script[src="${src}"]`)){ resolve(); return; }
+    const s = document.createElement('script');
+    s.src = src; s.onload = ()=>resolve(); s.onerror = ()=>reject(new Error('script load failed'));
+    document.head.appendChild(s);
+  });
+}
+async function screenCertificate(cfg){
+  const p = state.participant || {nickname:'', stamps:[]};
+  const wrap = el('<div class="screen"></div>');
+  let ach = state.achievementInfo;
+  if(!ach && p.id){
+    try{
+      const { data } = await sb.from('achievements').select('*').eq('participant_id', p.id).order('achieved_at',{ascending:false}).limit(1).maybeSingle();
+      if(data) ach = {number:data.number, nickname:data.nickname, stampCount:data.stamp_count, achievedAt:data.achieved_at};
+    }catch(e){ console.error('cert fetch failed', e); }
+  }
+  if(!ach){
+    wrap.innerHTML = `<div class="card" style="text-align:center;"><p>まだ達成記録が見つかりません。</p><button class="btn btn-ghost" id="back">もどる</button></div>`;
+    wrap.querySelector('#back').onclick = ()=> go('card');
+    return wrap;
+  }
+  const dt = new Date(ach.achievedAt);
+  const dtStr = dt.getFullYear()+'/'+(dt.getMonth()+1)+'/'+dt.getDate();
+  wrap.innerHTML = `
+  <div class="card" id="certCard" style="text-align:center;background:linear-gradient(180deg,#FFF9E5,#E9F9FB);">
+    <div style="font-size:12px;color:var(--ink-soft);letter-spacing:2px;">DIGITAL CERTIFICATE</div>
+    <div style="font-size:18px;font-weight:900;margin:10px 0;">湘南の夏 生きもの図鑑 認定証</div>
+    <div style="font-size:15px;font-weight:700;">${ach.nickname} さん</div>
+    <div style="font-size:13px;margin-top:10px;">6つの生きものを見つけました</div>
+    <div style="font-size:12px;color:var(--ink-soft);margin-top:14px;">達成日：${dtStr}</div>
+    <div style="font-size:12px;color:var(--ink-soft);">達成番号：${ach.number}</div>
+    <div style="font-size:12px;color:var(--ink-soft);margin-top:6px;">${cfg.campaignName}</div>
+  </div>
+  <button class="btn btn-primary" id="saveImg">画像として保存する</button>
+  <div id="saveMsg" class="small-note" style="display:none;text-align:center;"></div>
+  <button class="btn btn-ghost" id="back">もどる</button>
+  `;
+  wrap.querySelector('#back').onclick = ()=> go('card');
+  wrap.querySelector('#saveImg').onclick = async ()=>{
+    const msgEl = wrap.querySelector('#saveMsg');
+    try{
+      if(!window.html2canvas){
+        await loadExternalScript('https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js');
+      }
+      const canvas = await html2canvas(wrap.querySelector('#certCard'));
+      const link = document.createElement('a');
+      link.download = 'malia-certificate.png';
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+    }catch(e){
+      console.error('cert save failed', e);
+      msgEl.textContent = '画像保存に失敗しました。画面をスクリーンショットして保存してください。';
+      msgEl.style.display = 'block';
+    }
+  };
   return wrap;
 }
 
