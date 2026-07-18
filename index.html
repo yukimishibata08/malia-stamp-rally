@@ -154,15 +154,17 @@ label{font-size:12.5px;color:var(--ink-soft);font-weight:700;display:block;margi
 
 /* 賞状風 認定証（背景画像＋重ね文字） */
 .cert4-wrap{ padding:6px 0 4px; }
-.cert4-frame{ position:relative; width:100%; line-height:0; cursor:zoom-in; transition:transform .25s ease, box-shadow .25s ease; }
-.cert4-bg{ width:100%; height:auto; display:block; }
-.cert4-overlay{ position:absolute; top:0; left:0; right:0; bottom:0; font-family:'Noto Serif JP',serif; color:#2b2420; }
-.cert4-title{ position:absolute; top:25.5%; left:0; right:0; text-align:center; font-weight:900; letter-spacing:2px; color:#3a2a1a; font-size:2.6em; }
-.cert4-sub{ position:absolute; top:32.5%; left:0; right:0; text-align:center; letter-spacing:1px; color:#5b4a2a; font-family:'Zen Kaku Gothic New',sans-serif; font-size:1em; }
-.cert4-name{ position:absolute; top:38%; left:0; right:0; text-align:center; font-weight:900; color:#2b2420; font-family:'Zen Kaku Gothic New',sans-serif; font-size:2em; }
+.cert4-frame{ position:relative; width:100%; aspect-ratio:1536/1024; background:#FFFDF6; cursor:zoom-in; transition:transform .25s ease, box-shadow .25s ease; overflow:hidden; }
+.cert4-bg{ width:100%; height:100%; object-fit:contain; display:block; }
+.cert4-overlay{ position:absolute; top:0; left:0; right:0; bottom:0; font-family:'Noto Serif JP',serif; color:#2b2420; visibility:hidden; }
+.cert4-loading{ position:absolute; top:0; left:0; right:0; bottom:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:10px; background:#FFFDF6; font-size:13px; color:#8a7a5a; font-family:'Zen Kaku Gothic New',sans-serif; }
+.cert4-spinner{ width:26px; height:26px; border:3px solid #E7DCC2; border-top-color:#C9A227; border-radius:50%; animation:certSpin .8s linear infinite; }
+@keyframes certSpin{ to{ transform:rotate(360deg); } }
+.cert4-title{ position:absolute; top:23%; left:0; right:0; text-align:center; font-weight:900; letter-spacing:2px; color:#3a2a1a; font-size:3.5em; }
+.cert4-name{ position:absolute; top:33%; left:0; right:0; text-align:center; font-weight:900; color:#2b2420; font-family:'Zen Kaku Gothic New',sans-serif; font-size:2.85em; }
 .cert4-name .honor{ font-size:.55em; margin-left:6px; color:#5b5044; }
-.cert4-body{ position:absolute; top:48.5%; left:15%; right:15%; text-align:center; color:#3a3226; font-size:1.6em; line-height:2.3; }
-.cert4-meta{ position:absolute; top:76.5%; left:15%; right:15%; text-align:center; color:#4a4030; font-family:'Zen Kaku Gothic New',sans-serif; white-space:nowrap; font-size:1.25em; }
+.cert4-body{ position:absolute; top:46%; left:12%; right:12%; text-align:center; color:#3a3226; font-size:2.6em; line-height:2.1; }
+.cert4-meta{ position:absolute; top:77%; left:12%; right:12%; text-align:center; color:#4a4030; font-family:'Zen Kaku Gothic New',sans-serif; white-space:nowrap; font-size:1.65em; }
 .cert4-meta .sep{ opacity:.5; margin:0 5px;}
 body.cert-zoomed{ overflow:hidden; }
 body.cert-zoomed::before{ content:''; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(20,15,10,.65); z-index:998; }
@@ -1170,15 +1172,13 @@ async function screenCertificate(cfg){
   wrap.innerHTML = `
   <div class="cert4-wrap">
     <div class="cert4-frame" id="certCard4">
-      <img class="cert4-bg" src="cert-bg.png" alt="賞状背景">
-      <div class="cert4-overlay">
+      <img class="cert4-bg" src="cert-bg.png" alt="賞状背景" id="certBgImg">
+      <div class="cert4-overlay" id="certOverlay">
         <div class="cert4-title">にんていしょう</div>
-        <div class="cert4-sub">${cfg.campaignName}</div>
         <div class="cert4-name">${ach.nickname}<span class="honor">さん</span></div>
         <div class="cert4-body">
           あなたは Malia おでかけスタンプラリーにおいて<br>
-          6つの生きものをすべて発見し、<br>
-          湘南の夏 生きもの図鑑を見事完成されました。<br>
+          いきものずかんを見事完成されました。<br>
           そのがんばりをたたえ、ここに認定します。
         </div>
         <div class="cert4-meta">
@@ -1186,6 +1186,10 @@ async function screenCertificate(cfg){
           <span class="sep">｜</span>
           <span>達成番号：${ach.number}</span>
         </div>
+      </div>
+      <div class="cert4-loading" id="certLoading">
+        <div class="cert4-spinner"></div>
+        <div>認定証を作成しています…</div>
       </div>
     </div>
   </div>
@@ -1195,6 +1199,9 @@ async function screenCertificate(cfg){
   <button class="btn btn-ghost" id="back">もどる</button>
   `;
   const certFrame = wrap.querySelector('#certCard4');
+  const certOverlay = wrap.querySelector('#certOverlay');
+  const certLoading = wrap.querySelector('#certLoading');
+  const certBgImg = wrap.querySelector('#certBgImg');
   function sizeCertificate(){
     if(!certFrame) return;
     const w = certFrame.offsetWidth;
@@ -1202,9 +1209,24 @@ async function screenCertificate(cfg){
     certFrame.style.fontSize = (w*0.01)+'px';
   }
   window.addEventListener('resize', sizeCertificate);
-  const certBgImg = certFrame.querySelector('.cert4-bg');
-  certBgImg.addEventListener('load', sizeCertificate);
-  sizeCertificate();
+  async function waitImageReady(img){
+    if(img.decode){ try{ await img.decode(); return; }catch(e){} }
+    if(img.complete) return;
+    await new Promise(res=>{ img.addEventListener('load', res, {once:true}); img.addEventListener('error', res, {once:true}); });
+  }
+  async function revealCertificateWhenReady(){
+    try{ await waitImageReady(certBgImg); }catch(e){}
+    try{ if(document.fonts && document.fonts.ready) await document.fonts.ready; }catch(e){}
+    sizeCertificate();
+    requestAnimationFrame(()=>{
+      requestAnimationFrame(()=>{
+        sizeCertificate();
+        certLoading.style.display = 'none';
+        certOverlay.style.visibility = 'visible';
+      });
+    });
+  }
+  revealCertificateWhenReady();
   certFrame.addEventListener('click', ()=>{ document.body.classList.toggle('cert-zoomed'); setTimeout(sizeCertificate, 260); });
 
   wrap.querySelector('#back').onclick = ()=> go('card');
