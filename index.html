@@ -1579,6 +1579,7 @@ function adminSettings(cfg){
   const params = new URLSearchParams(location.search);
   const storeParam = params.get('store');
   await boot();
+  showDebugPanel();
   if(storeParam){
     const stores = await getStoresDB();
     if(stores.find(s=>s.id===storeParam)){
@@ -1587,6 +1588,33 @@ function adminSettings(cfg){
     }
   }
 })();
+
+/* ============ 原因確認用の一時的なデバッグ表示（確認後に削除予定） ============ */
+function showDebugPanel(){
+  try{
+    const isStandalone = (window.navigator.standalone === true) ||
+      (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches);
+    const rParam = getUrlParam('r');
+    const deviceToken = localStorage.getItem('malia_device_token');
+    const p = state.participant;
+
+    const lines = [
+      ['現在の完全なURL', location.href],
+      ['rパラメータ', rParam ? rParam : '（なし）'],
+      ['表示モード', isStandalone ? 'ホーム画面（standalone）' : 'ブラウザ（通常タブ）'],
+      ['localStorageの端末トークン', deviceToken ? deviceToken : '（なし）'],
+      ['読み込めた参加者', p ? (p.nickname + '（獲得スタンプ ' + p.stamps.length + '個 / restore_token: ' + (p.restore_token || 'なし') + '）') : '（参加者なし＝未登録として扱われています）'],
+    ];
+
+    const panel = document.createElement('div');
+    panel.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:99999;background:#111;color:#0f0;font-size:11px;line-height:1.6;padding:10px 12px;white-space:pre-wrap;word-break:break-all;font-family:monospace;max-height:50vh;overflow:auto;';
+    panel.innerHTML = '<b style="color:#ff0;">【確認用デバッグ表示（あとで削除します）】</b><br>' +
+      lines.map(([k,v])=>`<b>${k}：</b>${v}`).join('<br>');
+    document.body.appendChild(panel);
+  }catch(e){
+    console.error('debug panel failed', e);
+  }
+}
 </script>
 </body>
 </html>
