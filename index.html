@@ -1037,10 +1037,6 @@ async function screenCard(cfg, stores){
       : `<div style="font-size:12px;font-weight:700;margin-top:3px;letter-spacing:1px;">？？？</div><div style="font-size:9.5px;color:#B7C4C4;">まだ見つかっていないよ</div>`;
     return `<div class="stamp-slot ${got?'filled':''}"><span class="icon icon-wrap ${got?'got':'notgot'}">${got? iconSVG(s.icon, 60) : mysteryIconSVG(52)}</span>${label}</div>`;
   }).join('');
-  let coloringReady = false;
-  if(gotCount>=1){
-    try{ const res = await fetch('coloring.pdf', {method:'HEAD'}); coloringReady = res.ok; }catch(e){ coloringReady = false; }
-  }
   wrap.innerHTML = `
   <div class="topbar"><div class="logo">Malia</div><div class="sub">こんにちは、${p.nickname}さん</div></div>
   <div class="card">
@@ -1051,13 +1047,7 @@ async function screenCard(cfg, stores){
   </div>
   ${gotCount>=1 ? `
   <div class="card" style="text-align:center;">
-    <div style="font-weight:700;">🎁 参加賞をゲット！</div>
-    ${coloringReady
-      ? `<a href="coloring.pdf" target="_blank" rel="noopener noreferrer" class="btn btn-secondary" style="margin-top:10px;display:block;">塗り絵PDFを見る</a>
-         <div class="small-note" style="margin-top:6px;">タップすると、SafariでPDFが開きます。共有アイコンから「プリント」または「"ファイル"に保存」を選ぶと、A4サイズのまま保存・印刷できます</div>
-         <div class="small-note" style="margin-top:6px;color:var(--pink-deep);font-weight:700;">⚠️ 塗り絵を保存したい場合は、ホーム画面のアイコンからではなく、ブラウザ(SafariやChromeなど)で開いてご利用ください</div>`
-      : `<div class="small-note" style="margin-top:10px;">ぬりえは準備中です。しばらくお待ちください。</div>`
-    }
+    <div style="font-weight:700;">🌴 参加ありがとうございます！</div>
   </div>` : ''}
   ${gotCount>=2 ? `<button class="btn btn-outline-blue" id="rareBtn">✨ レア生きものコレクション</button>` : ''}
   ${await renderPrizeSection(cfg, p, gotCount)}
@@ -1213,7 +1203,7 @@ async function screenGotStamp(cfg, stores){
     <p style="font-size:12.5px;color:var(--ink-soft);">湘南の夏 生きもの図鑑に登録されました</p>
     ${msg? `<div class="remain-banner ${msg.final?'final':''}" style="margin-top:16px;"><div style="font-size:13px;font-weight:700;">${msg.overview}</div><div style="margin-top:4px;">${msg.tier}</div></div>`:''}
   </div>
-  ${p.stamps.length===1? `<div class="card" style="text-align:center;margin-top:14px;"><div style="font-weight:700;">🎁 参加賞をゲット！</div><div class="small-note">図鑑画面から「塗り絵PDF」を開けます</div></div>`:''}
+  ${p.stamps.length===1? `<div class="card" style="text-align:center;margin-top:14px;"><div style="font-weight:700;">🌴 参加ありがとうございます！</div></div>`:''}
   <button class="btn btn-primary" id="toCard">図鑑にもどる</button>
   `;
   wrap.querySelector('#toCard').onclick = ()=>{
