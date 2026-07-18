@@ -213,9 +213,17 @@ body.cert-zoomed .cert4-frame{
 .store-row .status{font-size:11.5px;margin-top:2px;}
 .store-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:6px;}
 .store-card{
-  display:flex;flex-direction:column;background:#fff;border-radius:14px;padding:12px;
-  box-shadow:var(--shadow);cursor:pointer;height:100%;
+  display:flex;flex-direction:column;background:#fff;border-radius:14px;padding:0;
+  box-shadow:var(--shadow);cursor:pointer;height:100%;overflow:hidden;
 }
+.store-card-photo{
+  width:100%;aspect-ratio:3/2;object-fit:cover;display:block;background:#F3ECE2;
+}
+.store-card-photo.placeholder{
+  display:flex;align-items:center;justify-content:center;
+  font-size:11px;color:var(--ink-soft);text-align:center;
+}
+.store-card-body{ display:flex;flex-direction:column;flex:1;padding:10px 12px 12px; }
 .store-card-name{font-weight:700;font-size:13.5px;line-height:1.35;word-break:break-word;margin-bottom:4px;}
 .store-card-addr{font-size:11px;color:var(--ink-soft);line-height:1.45;word-break:break-word;flex:1;margin-bottom:8px;}
 .store-card .status{font-size:11px;margin-bottom:8px;}
@@ -777,11 +785,17 @@ async function screenStoreList(cfg, stores){
   const cards = stores.map(s=>{
     const got = p && p.stamps.includes(s.id);
     const mapHref = s.mapUrl ? s.mapUrl : ('https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(s.address||s.name));
+    const photoHtml = s.photo
+      ? `<img class="store-card-photo" src="${s.photo}" alt="${s.name}">`
+      : `<div class="store-card-photo placeholder">📷 写真準備中</div>`;
     return `<div class="store-card" data-id="${s.id}">
-      <div class="store-card-name">${s.name}</div>
-      <div class="store-card-addr">${s.address||'住所未設定'}</div>
-      <div class="status ${got?'got':'not'}">${got?'✅ スタンプ獲得済み':'未獲得'}</div>
-      <button class="btn btn-outline-blue store-card-mapbtn" data-map="${mapHref}">📍 Googleマップで見る</button>
+      ${photoHtml}
+      <div class="store-card-body">
+        <div class="store-card-name">${s.name}</div>
+        <div class="store-card-addr">${s.address||'住所未設定'}</div>
+        <div class="status ${got?'got':'not'}">${got?'✅ スタンプ獲得済み':'未獲得'}</div>
+        <button class="btn btn-outline-blue store-card-mapbtn" data-map="${mapHref}">📍 Googleマップで見る</button>
+      </div>
     </div>`;
   }).join('');
   wrap.innerHTML = `
