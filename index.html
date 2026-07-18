@@ -723,16 +723,6 @@ async function screenCard(cfg, stores){
   }).join('');
   wrap.innerHTML = `
   <div class="topbar"><div class="logo">Malia</div><div class="sub">こんにちは、${p.nickname}さん</div></div>
-  <div class="card" style="text-align:center;">
-    <button class="btn btn-outline-blue" id="homeGuideBtn">🏠 ホーム画面への追加方法を見る</button>
-    <div id="homeGuideText" style="display:none;text-align:left;margin-top:12px;">
-      <div class="small-note" style="background:#FFF3CD;color:#7a5b00;padding:10px 12px;border-radius:10px;font-weight:700;margin-bottom:10px;">
-        ⚠️ この案内を開いた今の画面のまま追加してください。別のページを開いてから追加すると、スタンプ状況が引き継がれない場合があります。
-      </div>
-      <div class="info-line"><span class="ico">🍎</span><span><b>iPhone(Safari)：</b>画面下の共有ボタンを押す →「ホーム画面に追加」を選んでください</span></div>
-      <div class="info-line"><span class="ico">🤖</span><span><b>Android：</b>ブラウザのメニューを開く →「ホーム画面に追加」または「アプリをインストール」を選んでください</span></div>
-    </div>
-  </div>
   <div class="card">
     <h2 class="section-title">📖 湘南の夏 生きもの図鑑</h2>
     <div class="stamp-grid">${gridHtml}</div>
@@ -760,9 +750,6 @@ async function screenCard(cfg, stores){
   <button class="btn btn-secondary" id="listBtn">🏝️ 店舗一覧を見る</button>
   `;
   wrap.querySelector('#listBtn').onclick = ()=> go('storeList',{storeListTarget:'participant'});
-  wrap.querySelector('#homeGuideBtn').onclick = ()=>{
-    wrap.querySelector('#homeGuideText').style.display = 'block';
-  };
   const cb = wrap.querySelector('#toComplete');
   if(cb) cb.onclick = ()=> go('complete');
   const rareBtn = wrap.querySelector('#rareBtn');
