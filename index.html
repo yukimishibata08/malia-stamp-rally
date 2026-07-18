@@ -108,11 +108,11 @@ label{font-size:12.5px;color:var(--ink-soft);font-weight:700;display:block;margi
 
 .rare-icon svg{display:block;margin:0 auto;}
 .rare-gold svg{filter:sepia(1) saturate(5) hue-rotate(-8deg) brightness(1.15) drop-shadow(0 0 6px rgba(255,195,61,.6));}
-.rare-aurora svg{filter:hue-rotate(160deg) saturate(2.4) brightness(1.1) drop-shadow(0 0 6px rgba(143,203,219,.6));}
-.rare-jewel svg{filter:saturate(2.2) brightness(1.05) drop-shadow(0 0 6px rgba(255,105,180,.5));}
+.rare-aurora svg{filter:drop-shadow(0 0 9px rgba(159,198,222,.75));}
+.rare-jewel svg{filter:drop-shadow(0 0 9px rgba(255,179,214,.75));}
 .rare-rainbow svg{animation:rareRainbow 3s linear infinite; filter:saturate(2.5) drop-shadow(0 0 6px rgba(255,255,255,.6));}
 @keyframes rareRainbow{0%{filter:hue-rotate(0deg) saturate(2.5);}100%{filter:hue-rotate(360deg) saturate(2.5);}}
-.rare-starry svg{filter:brightness(.85) saturate(1.6) drop-shadow(0 0 6px rgba(120,120,255,.6));}
+.rare-starry svg{filter:drop-shadow(0 0 9px rgba(195,174,224,.75));}
 .rare-legendary svg{filter:saturate(1.8) drop-shadow(0 0 8px rgba(191,160,224,.7));}
 .rare-locked svg{filter:grayscale(1) opacity(.4);}
 
@@ -157,6 +157,51 @@ label{font-size:12.5px;color:var(--ink-soft);font-weight:700;display:block;margi
 }
 .btn-gacha2:active{ transform:scale(.96); }
 
+/* ===== 景品応募ポップアップ ===== */
+.prize-modal-backdrop{
+  position:fixed; inset:0; background:rgba(38,54,58,.55); z-index:1000;
+  display:flex; align-items:center; justify-content:center; padding:20px;
+  animation:prizeBackdropIn .25s ease;
+}
+@keyframes prizeBackdropIn{ from{opacity:0;} to{opacity:1;} }
+.prize-modal{
+  background:#FFFDF6; border-radius:22px; padding:26px 20px 22px; max-width:340px; width:100%;
+  position:relative; text-align:center; box-shadow:0 20px 50px rgba(0,0,0,.25);
+  animation:prizeModalIn .45s cubic-bezier(.34,1.56,.64,1);
+}
+@keyframes prizeModalIn{
+  0%{ opacity:0; transform:scale(.7) translateY(20px); }
+  60%{ opacity:1; transform:scale(1.04) translateY(-4px); }
+  100%{ opacity:1; transform:scale(1) translateY(0); }
+}
+.prize-modal .sparkle{ z-index:2; }
+.prize-modal-icon{ margin:6px 0 10px; font-size:56px; line-height:1; animation:prizePop .6s cubic-bezier(.34,1.56,.64,1) .15s both; }
+.gacha-unlock-title{
+  font-size:19px; font-weight:900; color:var(--pink-deep); line-height:1.4; margin:16px 0 4px;
+  animation:prizePop .65s cubic-bezier(.34,1.56,.64,1) .1s both;
+}
+@keyframes prizePop{ from{ opacity:0; transform:scale(.5); } to{ opacity:1; transform:scale(1); } }
+.prize-modal-title{ font-size:17px; font-weight:900; color:var(--ink); margin-bottom:6px; }
+.prize-modal-name{ font-size:14px; font-weight:700; color:var(--pink-deep); margin-bottom:2px; }
+.prize-modal-sub{ font-size:11.5px; color:var(--ink-soft); margin-bottom:12px; }
+.prize-modal-note{ font-size:12.5px; color:var(--ink); background:#FFF3D0; border-radius:10px; padding:10px 12px; line-height:1.7; margin-bottom:8px; }
+.prize-modal-safe{ font-size:11px; color:var(--ink-soft); margin-bottom:14px; line-height:1.6; }
+.prize-modal-close{ position:absolute; top:10px; right:14px; background:none; border:none; font-size:18px; color:var(--ink-soft); cursor:pointer; }
+
+/* ===== 図鑑画面の常設応募欄 ===== */
+.prize-entry-card{ text-align:center; }
+.prize-entry-row{ display:flex; align-items:center; gap:12px; padding:12px 4px; border-top:1px solid #F1E7DF; text-align:left; }
+.prize-entry-row:first-of-type{ border-top:none; }
+.prize-entry-row .prize-icon-wrap{ flex-shrink:0; }
+.prize-entry-row .prize-text{ flex:1; }
+.prize-entry-row .prize-label{ font-size:11px; color:var(--ink-soft); font-weight:700; }
+.prize-entry-row .prize-name{ font-size:13px; font-weight:700; color:var(--ink); margin:1px 0; }
+.prize-entry-row .prize-sub{ font-size:10.5px; color:var(--ink-soft); }
+.prize-entered-badge{ display:inline-block; background:#E4F5EC; color:#3A9463; font-size:11.5px; font-weight:700; padding:4px 10px; border-radius:20px; }
+.prize-line-again{ display:block; font-size:11px; color:var(--blue-deep); margin-top:4px; background:none; border:none; cursor:pointer; padding:0; text-decoration:underline; }
+.prize-confirm-box{ margin-top:8px; background:#FFF6E8; border-radius:10px; padding:8px 10px; font-size:11.5px; color:var(--ink-soft); }
+.prize-confirm-box button{ margin-top:6px; }
+
 /* 賞状風 認定証（背景画像＋重ね文字） */
 .cert4-wrap{ padding:6px 0 4px; }
 .cert4-frame{ position:relative; width:100%; aspect-ratio:1536/1024; background:#FFFDF6; cursor:zoom-in; transition:transform .25s ease, box-shadow .25s ease; overflow:hidden; }
@@ -185,14 +230,31 @@ body.cert-zoomed .cert4-frame{
   background:radial-gradient(circle, rgba(255,211,120,.6) 0%, rgba(255,211,120,0) 70%);
   animation:glowPulse 1.8s ease-out 1;
 }
-.rare-pop svg{animation:rarePop 1.4s cubic-bezier(.34,1.56,.64,1) forwards;}
+.gacha-glow.aurora-ring{
+  width:210px; height:210px;
+  background:
+    radial-gradient(circle, rgba(255,214,235,.55) 0%, rgba(255,214,235,0) 55%),
+    conic-gradient(from 0deg, rgba(255,196,229,.45), rgba(191,224,255,.45), rgba(255,241,181,.45), rgba(214,196,255,.45), rgba(255,196,229,.45));
+  border-radius:50%;
+  animation: auroraSpin 2.6s linear infinite, glowPulse 2s ease-out 1;
+  filter: blur(6px);
+}
+@keyframes auroraSpin{ from{ transform:translateX(-50%) rotate(0deg); } to{ transform:translateX(-50%) rotate(360deg); } }
+.rare-pop svg{animation:rarePop 1.6s cubic-bezier(.34,1.56,.64,1) forwards;}
 @keyframes rarePop{
   0%{opacity:0; transform:scale(.4) translateY(14px);}
-  55%{opacity:1; transform:scale(1.12) translateY(-4px);}
-  75%{transform:scale(.96) translateY(0);}
+  55%{opacity:1; transform:scale(1.16) translateY(-6px);}
+  75%{transform:scale(.95) translateY(0);}
   100%{opacity:1; transform:scale(1) translateY(0);}
 }
 .rare-name-pop{animation:fadeIn .6s ease .5s both;}
+.rare-name-shine{
+  background:linear-gradient(90deg, var(--ink) 0%, var(--ink) 40%, #FFF6C9 50%, var(--ink) 60%, var(--ink) 100%);
+  background-size:250% 100%;
+  -webkit-background-clip:text; background-clip:text; color:transparent;
+  animation:fadeIn .6s ease .5s both, nameShine 2.2s linear .8s infinite;
+}
+@keyframes nameShine{ from{ background-position:200% 0; } to{ background-position:-50% 0; } }
 
 .remain-banner{
   text-align:center;padding:16px;border-radius:16px;font-weight:900;font-size:16px;
@@ -297,7 +359,7 @@ table.admin-table th{color:var(--ink-soft);font-weight:700;}
 <script>
 /* =============== Supabase 接続設定 =============== */
 /* ↓↓↓ この2つを、ご自身のSupabaseプロジェクトの値に書き換えてください ↓↓↓ */
-const SUPABASE_URL = 'https://qaugcybfnqgeftpihojy.supabase.co';
+const SUPABASE_URL = 'https://qaugcybfnqgeftpihojy.supabase.co/';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFhdWdjeWJmbnFnZWZ0cGlob2p5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM4MzI5MzEsImV4cCI6MjA5OTQwODkzMX0.zEDGFD87PAU3mfctp4ESOrfw55JKNr5_pwTyXJeMn9s';
 /* ↑↑↑ ここまで ↑↑↑ */
 const SUPABASE_CONFIGURED = SUPABASE_URL.indexOf('YOUR_SUPABASE_URL_HERE')===-1 && SUPABASE_ANON_KEY.indexOf('YOUR_SUPABASE_ANON_KEY_HERE')===-1;
@@ -400,20 +462,203 @@ async function getGachaResult(stage){
   }catch(e){ console.error('getGachaResult failed', e); return null; }
 }
 async function drawGachaDB(stage){
-  const participantId = state.participant.id;
+  // すでにこの回の結果がある場合は、新しく引き直さずそれを返す（通信エラー後の再試行でも安全にする）
+  const existing = await getGachaResult(stage);
+  if(existing){ return { creature: existing, alreadyDrawn:true }; }
+
   let excluded = null;
   if(stage===5){ excluded = await getGachaResult(3); }
   const pool = excluded ? RARE_CREATURES.filter(c=>c!==excluded) : RARE_CREATURES;
   const pick = pool[Math.floor(Math.random()*pool.length)];
-  const { error } = await sb.from('rare_gacha_results').insert({participant_id:participantId, stage, creature:pick});
-  if(error){
-    if(error.code==='23505'){
-      const existing = await getGachaResult(stage);
-      return { creature: existing, alreadyDrawn:true };
+
+  const participantId = state.participant.id;
+  let lastErr = null;
+  for(let attempt=0; attempt<3; attempt++){
+    try{
+      const { error } = await sb.from('rare_gacha_results').insert({participant_id:participantId, stage, creature:pick});
+      if(error){
+        if(error.code==='23505'){
+          const already = await getGachaResult(stage);
+          return { creature: already, alreadyDrawn:true };
+        }
+        throw error;
+      }
+      return { creature: pick, alreadyDrawn:false };
+    }catch(e){
+      lastErr = e;
+      if(attempt<2){ await new Promise(r=>setTimeout(r, 400*(attempt+1))); }
     }
-    throw error;
   }
-  return { creature: pick, alreadyDrawn:false };
+  throw lastErr;
+}
+
+/* ---- 景品応募（prize_entries テーブルのみ使用） ---- */
+const PRIZE_INFO = {
+  3: { label:'3個達成！抽選に応募できます', name:'サーティワン アイスクリーム 500円チケット', actionText:'サーティワン アイスクリーム 500円チケットに応募する', sub:'抽選で20名様' },
+  5: { label:'5個達成！プレゼントに応募できます', name:'Amazonギフトカード 5,000円分', actionText:'Amazonギフトカード5,000円分に応募する', sub:'' },
+};
+function prizeIconSVG(stage, size){
+  size = size || 70;
+  if(stage===3){
+    return `<svg viewBox="0 0 100 100" width="${size}" height="${size}">
+      <path d="M37 52 L50 92 L63 52 Z" fill="#EAC08C"/>
+      <path d="M37 52 L63 52 L60 58 L40 58 Z" fill="#D9A96B"/>
+      <circle cx="50" cy="44" r="17" fill="#FFC9DA"/>
+      <circle cx="36" cy="34" r="15" fill="#FFEAA8"/>
+      <circle cx="50" cy="24" r="13" fill="#BFE3EE"/>
+      <circle cx="50" cy="20" r="3.4" fill="#FF6B6B"/>
+    </svg>`;
+  }
+  return `<svg viewBox="0 0 100 100" width="${size}" height="${size}">
+    <rect x="14" y="30" width="72" height="46" rx="9" fill="#FFF6DE" stroke="#FFC33D" stroke-width="4"/>
+    <rect x="14" y="42" width="72" height="10" fill="#FFC33D" opacity=".55"/>
+    <circle cx="50" cy="60" r="11" fill="#FFC33D"/>
+    <path d="M50 53 L52 58 L57 58 L53 61 L55 66 L50 63 L45 66 L47 61 L43 58 L48 58 Z" fill="#fff"/>
+  </svg>`;
+}
+async function getPrizeEntry(stage){
+  if(!state.participant) return false;
+  try{
+    const { data, error } = await sb.from('prize_entries').select('id').eq('participant_id', state.participant.id).eq('prize_stage', stage).maybeSingle();
+    if(error || !data) return false;
+    return true;
+  }catch(e){ console.error('getPrizeEntry failed', e); return false; }
+}
+async function markPrizeEntered(stage){
+  try{
+    const { error } = await sb.from('prize_entries').insert({participant_id: state.participant.id, prize_stage: stage});
+    if(error && error.code!=='23505') throw error;
+    return true;
+  }catch(e){ console.error('markPrizeEntered failed', e); return false; }
+}
+async function hasSeenPrizePopup(stage){
+  if(!state.participant) return true; // 参加者不明時は誤って何度も出さないよう安全側に倒す
+  try{
+    const { data, error } = await sb.from('prize_popup_seen').select('prize_stage').eq('participant_id', state.participant.id).eq('prize_stage', stage).maybeSingle();
+    if(error) return true;
+    return !!data;
+  }catch(e){ console.error('hasSeenPrizePopup failed', e); return true; }
+}
+async function markPrizePopupSeen(stage){
+  try{
+    const { error } = await sb.from('prize_popup_seen').insert({participant_id: state.participant.id, prize_stage: stage});
+    if(error && error.code!=='23505') console.error('markPrizePopupSeen failed', error);
+  }catch(e){ console.error('markPrizePopupSeen failed', e); }
+}
+
+function prizeEntryRowHtml(stage, entered){
+  const info = PRIZE_INFO[stage];
+  if(entered){
+    return `<div class="prize-entry-row">
+      <div class="prize-icon-wrap">${prizeIconSVG(stage,54)}</div>
+      <div class="prize-text">
+        <div class="prize-label">${info.label}</div>
+        <div class="prize-name">${info.actionText}</div>
+        <span class="prize-entered-badge">✅ 応募済み</span><br>
+        <button class="prize-line-again" data-stage="${stage}">LINEをもう一度開く</button>
+      </div>
+    </div>`;
+  }
+  return `<div class="prize-entry-row">
+    <div class="prize-icon-wrap">${prizeIconSVG(stage,54)}</div>
+    <div class="prize-text">
+      <div class="prize-label">${info.label}</div>
+      <div class="prize-name">${info.actionText}</div>
+      ${info.sub? `<div class="prize-sub">${info.sub}</div>`:''}
+      <button class="btn btn-secondary prize-line-btn" data-stage="${stage}" style="margin-top:6px;padding:8px 10px;font-size:12px;width:auto;">LINEで応募する</button>
+      <div class="prize-confirm-box" data-stage="${stage}" style="display:none;">
+        LINEを開けましたか？送信が終わったら押してください
+        <button class="btn btn-primary prize-confirm-btn" data-stage="${stage}" style="font-size:12px;padding:8px 10px;">✅ スクリーンショットを送信しました</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+async function renderPrizeSection(cfg, p, gotCount){
+  const show3 = gotCount>=3;
+  const show5 = gotCount>=5;
+  if(!show3 && !show5) return '';
+  const entered3 = show3 ? await getPrizeEntry(3) : false;
+  const entered5 = show5 ? await getPrizeEntry(5) : false;
+  let rows = '';
+  if(show3) rows += prizeEntryRowHtml(3, entered3);
+  if(show5) rows += prizeEntryRowHtml(5, entered5);
+  return `<div class="card prize-entry-card">
+    <h2 class="section-title">🎁 景品に応募する</h2>
+    <div class="small-note" style="margin-bottom:8px;">${p.nickname}さん・現在 ${gotCount}/${cfg.requiredStamps} 個達成</div>
+    ${rows}
+  </div>`;
+}
+
+function wirePrizeSection(wrap, cfg){
+  wrap.querySelectorAll('.prize-line-btn').forEach(btn=>{
+    btn.onclick = ()=>{
+      window.open(cfg.lineUrl || 'https://line.me/', '_blank');
+      const stage = btn.dataset.stage;
+      const box = wrap.querySelector('.prize-confirm-box[data-stage="'+stage+'"]');
+      if(box) box.style.display = 'block';
+      btn.style.display = 'none';
+    };
+  });
+  wrap.querySelectorAll('.prize-confirm-btn').forEach(btn=>{
+    btn.onclick = async ()=>{
+      const stage = parseInt(btn.dataset.stage, 10);
+      btn.disabled = true; btn.textContent = '保存中…';
+      await markPrizeEntered(stage);
+      render();
+    };
+  });
+  wrap.querySelectorAll('.prize-line-again').forEach(btn=>{
+    btn.onclick = ()=>{ window.open(cfg.lineUrl || 'https://line.me/', '_blank'); };
+  });
+}
+
+function showPrizePopup(stage, cfg, onClose){
+  const info = PRIZE_INFO[stage];
+  const backdrop = document.createElement('div');
+  backdrop.className = 'prize-modal-backdrop';
+  backdrop.innerHTML = `
+    <div class="prize-modal">
+      ${['✨','⭐','🎊','✨','⭐'].map((sp,i)=>`<span class="sparkle" style="left:${8+i*20}%;top:${i%2===0?0:14}px;animation-delay:${i*0.1}s;">${sp}</span>`).join('')}
+      <button class="prize-modal-close" id="prizeModalCloseX">✕</button>
+      <div class="prize-modal-title">${info.label}</div>
+      <div class="prize-modal-icon">${prizeIconSVG(stage, 80)}</div>
+      <div class="prize-modal-name">${info.actionText}</div>
+      ${info.sub? `<div class="prize-modal-sub">${info.sub}</div>`:''}
+      ${stage===5? `<div class="prize-modal-note" style="background:#FFE9EF;color:var(--pink-deep);font-weight:700;">あと1つでコンプリート！<br>すべてのいきものを集めると、特別な認定証がもらえるよ✨</div>`:''}
+      <div class="prize-modal-note">📸 図鑑画面をスクリーンショットして、LINEから送ってね</div>
+      <div class="prize-modal-safe">この画面を閉じても、図鑑画面の応募欄からいつでも応募できます</div>
+      <button class="btn btn-primary" id="prizeModalGoCard" style="margin-bottom:8px;">図鑑のスクリーンショットを撮る</button>
+      <button class="btn btn-ghost" id="prizeModalLater">あとで</button>
+    </div>
+  `;
+  document.body.appendChild(backdrop);
+  function closePopup(){ backdrop.remove(); if(onClose) onClose(); }
+  backdrop.querySelector('#prizeModalCloseX').onclick = closePopup;
+  backdrop.querySelector('#prizeModalLater').onclick = closePopup;
+  backdrop.querySelector('#prizeModalGoCard').onclick = ()=>{ closePopup(); go('card'); };
+}
+
+/* レア生きものガチャの解放案内（応募案内ポップアップと同じ世界観の中央表示） */
+function showGachaUnlockPopup(gachaStage, cfg){
+  const nth = gachaStage===3 ? '1' : '2';
+  const backdrop = document.createElement('div');
+  backdrop.className = 'prize-modal-backdrop';
+  backdrop.innerHTML = `
+    <div class="prize-modal">
+      ${['✨','⭐','🎊','✨','🌟','⭐','✨'].map((sp,i)=>`<span class="sparkle" style="left:${4+i*14}%;top:${i%2===0?0:16}px;animation-delay:${i*0.09}s;">${sp}</span>`).join('')}
+      <button class="prize-modal-close" id="gachaUnlockCloseX">✕</button>
+      <div class="gacha-unlock-title">✨ レア生きものガチャが<br>解放されました！</div>
+      <div class="prize-modal-sub" style="margin-bottom:14px;">${nth}回目のチャンスです</div>
+      <button class="btn btn-primary" id="gachaUnlockGo" style="margin-bottom:8px;">ガチャを回す</button>
+      <button class="btn btn-ghost" id="gachaUnlockLater">あとで</button>
+    </div>
+  `;
+  document.body.appendChild(backdrop);
+  function closePopup(){ backdrop.remove(); }
+  backdrop.querySelector('#gachaUnlockCloseX').onclick = closePopup;
+  backdrop.querySelector('#gachaUnlockLater').onclick = closePopup;
+  backdrop.querySelector('#gachaUnlockGo').onclick = ()=>{ closePopup(); go('gacha', {gachaStage}); };
 }
 
 /* 湘南の夏 生きもの図鑑：5種類の生き物イラストと紹介文 */
@@ -503,14 +748,14 @@ function mysteryIconSVG(size){
 }
 
 /* ============ レア生きものガチャ（既存の6種類とは完全に別枠の追加機能） ============ */
-const RARE_CREATURES = ['金色のウミガメ','オーロライルカ','宝石カニ','虹色ヒトデ','星空ヤドカリ','伝説のタツノオトシゴ'];
+const RARE_CREATURES = ['金色のウミガメ','深海のリュウグウノツカイ','月あかりのクリオネ','虹色のウミウシ','幻のメンダコ','伝説のタツノオトシゴ'];
 const RARE_ICON_MAP = {
-  '金色のウミガメ':     {base:'turtle',   cls:'rare-gold'},
-  'オーロライルカ':     {base:'dolphin',  cls:'rare-aurora'},
-  '宝石カニ':           {base:'crab',     cls:'rare-jewel'},
-  '虹色ヒトデ':         {base:'starfish', cls:'rare-rainbow'},
-  '星空ヤドカリ':       {base:'hermit',   cls:'rare-starry'},
-  '伝説のタツノオトシゴ': {base:'seahorse', cls:'rare-legendary'},
+  '金色のウミガメ':         {base:'turtle',     cls:'rare-gold'},
+  '深海のリュウグウノツカイ': {base:'oarfish',    cls:'rare-aurora'},
+  '月あかりのクリオネ':       {base:'clione',     cls:'rare-jewel'},
+  '虹色のウミウシ':           {base:'nudibranch', cls:'rare-rainbow'},
+  '幻のメンダコ':             {base:'dumbo',      cls:'rare-starry'},
+  '伝説のタツノオトシゴ':     {base:'seahorse',   cls:'rare-legendary'},
 };
 function seahorseSVG(size){
   size = size || 40;
@@ -520,10 +765,58 @@ function seahorseSVG(size){
     <path d="M58 30 Q64 32 62 38" stroke="#A985D6" stroke-width="3" fill="none" stroke-linecap="round"/>
   </svg>`;
 }
+function clioneSVG(size){
+  size = size || 40;
+  return `<svg viewBox="0 0 100 100" width="${size}" height="${size}">
+    <ellipse cx="50" cy="58" rx="16" ry="24" fill="#EAF3FF" opacity=".9"/>
+    <ellipse cx="50" cy="58" rx="16" ry="24" fill="none" stroke="#BFD9F5" stroke-width="1.5"/>
+    <path d="M36 44 Q18 38 16 54 Q26 52 38 58 Z" fill="#FFD3E6" opacity=".9"/>
+    <path d="M64 44 Q82 38 84 54 Q74 52 62 58 Z" fill="#FFD3E6" opacity=".9"/>
+    <ellipse cx="44" cy="42" rx="3" ry="4" fill="#3A2317" opacity=".6"/>
+    <ellipse cx="56" cy="42" rx="3" ry="4" fill="#3A2317" opacity=".6"/>
+    <path d="M46 70 Q50 78 54 70" stroke="#BFD9F5" stroke-width="2" fill="none" stroke-linecap="round"/>
+  </svg>`;
+}
+function nudibranchSVG(size){
+  size = size || 40;
+  return `<svg viewBox="0 0 100 100" width="${size}" height="${size}">
+    <path d="M18 62 Q20 40 50 38 Q82 38 84 60 Q86 76 60 78 Q30 80 18 62 Z" fill="#FFD9EE"/>
+    <path d="M18 62 Q20 40 50 38 Q82 38 84 60 Q86 76 60 78 Q30 80 18 62 Z" fill="none" stroke="#F5A8D6" stroke-width="1.5"/>
+    <path d="M40 42 L37 30 M48 40 L47 27 M56 40 L58 27 M64 42 L68 30" stroke="#B98CE0" stroke-width="3" fill="none" stroke-linecap="round"/>
+    <path d="M30 50 L26 40 M36 56 L30 48" stroke="#8FC7EA" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+    <circle cx="30" cy="58" r="2" fill="#3A2317" opacity=".5"/>
+  </svg>`;
+}
+function dumboOctopusSVG(size){
+  size = size || 40;
+  return `<svg viewBox="0 0 100 100" width="${size}" height="${size}">
+    <ellipse cx="50" cy="48" rx="26" ry="22" fill="#D8C6F0"/>
+    <ellipse cx="24" cy="42" rx="14" ry="18" fill="#E4D6F5" transform="rotate(-18 24 42)"/>
+    <ellipse cx="76" cy="42" rx="14" ry="18" fill="#E4D6F5" transform="rotate(18 76 42)"/>
+    <circle cx="41" cy="46" r="4.5" fill="#3A2317"/>
+    <circle cx="59" cy="46" r="4.5" fill="#3A2317"/>
+    <circle cx="42.5" cy="44.5" r="1.4" fill="#fff"/>
+    <circle cx="60.5" cy="44.5" r="1.4" fill="#fff"/>
+    <path d="M34 66 Q36 78 32 86 M42 68 Q42 80 40 88 M50 69 Q50 81 50 89 M58 68 Q58 80 60 88 M66 66 Q64 78 68 86" stroke="#C3AEE0" stroke-width="4" fill="none" stroke-linecap="round"/>
+  </svg>`;
+}
+function oarfishSVG(size){
+  size = size || 40;
+  return `<svg viewBox="0 0 100 100" width="${size}" height="${size}">
+    <path d="M12 74 Q30 40 50 52 Q70 64 88 30" stroke="#CFE3F0" stroke-width="14" fill="none" stroke-linecap="round"/>
+    <path d="M12 74 Q30 40 50 52 Q70 64 88 30" stroke="#9FC6DE" stroke-width="14" fill="none" stroke-linecap="round" opacity=".35"/>
+    <path d="M16 66 Q20 54 16 44 M26 55 Q30 45 27 36 M36 51 Q40 42 38 33" stroke="#FF9BB3" stroke-width="3" fill="none" stroke-linecap="round"/>
+    <circle cx="86" cy="28" r="3" fill="#3A2317"/>
+  </svg>`;
+}
 function rareIconSVG(name, size){
   const m = RARE_ICON_MAP[name];
   if(!m) return mysteryIconSVG(size);
   if(m.base==='seahorse') return seahorseSVG(size);
+  if(m.base==='clione') return clioneSVG(size);
+  if(m.base==='nudibranch') return nudibranchSVG(size);
+  if(m.base==='dumbo') return dumboOctopusSVG(size);
+  if(m.base==='oarfish') return oarfishSVG(size);
   return iconSVG(m.base, size);
 }
 
@@ -728,7 +1021,8 @@ async function screenCard(cfg, stores){
     <button class="btn btn-secondary" id="coloringBtn" style="margin-top:10px;">ぬりえPDFを開く</button>
     <div id="coloringMsg" class="small-note" style="display:none;"></div>
   </div>` : ''}
-  ${gotCount>=3 ? `<button class="btn btn-outline-blue" id="rareBtn">✨ レア生きものコレクション</button>` : ''}
+  ${gotCount>=2 ? `<button class="btn btn-outline-blue" id="rareBtn">✨ レア生きものコレクション</button>` : ''}
+  ${await renderPrizeSection(cfg, p, gotCount)}
   <div class="card" style="text-align:center;">
     <div style="font-size:13.5px;font-weight:700;">📷 スマートフォンの標準カメラを開いて、<br>店頭のQRコードを読み取ってください</div>
     <div class="small-note" style="margin-top:6px;">iPhone・Androidどちらも、普段お使いのカメラアプリでそのまま読み取れます</div>
@@ -740,6 +1034,7 @@ async function screenCard(cfg, stores){
   if(cb) cb.onclick = ()=> go('complete');
   const rareBtn = wrap.querySelector('#rareBtn');
   if(rareBtn) rareBtn.onclick = ()=> go('rareCollection');
+  wirePrizeSection(wrap, cfg);
   const colBtn = wrap.querySelector('#coloringBtn');
   if(colBtn) colBtn.onclick = async ()=>{
     const msgEl = wrap.querySelector('#coloringMsg');
@@ -890,15 +1185,23 @@ async function screenGotStamp(cfg, stores){
     ${msg? `<div class="remain-banner ${msg.final?'final':''}" style="margin-top:16px;"><div style="font-size:13px;font-weight:700;">${msg.overview}</div><div style="margin-top:4px;">${msg.tier}</div></div>`:''}
   </div>
   ${p.stamps.length===1? `<div class="card" style="text-align:center;margin-top:14px;"><div style="font-weight:700;">🎁 参加賞をゲット！</div><div class="small-note">図鑑画面から「ぬりえPDF」を開けます</div></div>`:''}
-  ${p.stamps.length===3? `<div class="card" style="text-align:center;margin-top:14px;"><div style="font-weight:700;">✨ レア生きものガチャが解放されました！</div><button class="btn-gacha" id="toGacha3" style="margin-top:10px;"><span class="gacha-machine">🟠<span class="gacha-handle">🕹️</span></span><span class="gacha-label">ガチャを回す！</span></button></div>`:''}
-  ${p.stamps.length===5? `<div class="card" style="text-align:center;margin-top:14px;"><div style="font-weight:700;">✨ 2回目のレア生きものガチャが解放されました！</div><button class="btn-gacha" id="toGacha5" style="margin-top:10px;"><span class="gacha-machine">🟠<span class="gacha-handle">🕹️</span></span><span class="gacha-label">ガチャを回す！</span></button></div>`:''}
   <button class="btn btn-primary" id="toCard">図鑑にもどる</button>
   `;
-  const g3 = wrap.querySelector('#toGacha3'); if(g3) g3.onclick = ()=> go('gacha', {gachaStage:3});
-  const g5 = wrap.querySelector('#toGacha5'); if(g5) g5.onclick = ()=> go('gacha', {gachaStage:5});
   wrap.querySelector('#toCard').onclick = ()=>{
     if(p.stamps.length>=cfg.requiredStamps) go('complete'); else go('card');
   };
+  if(p.stamps.length===2 || p.stamps.length===4){
+    const gachaStage = p.stamps.length===2 ? 3 : 5;
+    setTimeout(()=> showGachaUnlockPopup(gachaStage, cfg), 500);
+  } else if(p.stamps.length===3 || p.stamps.length===5){
+    const prizeStage = p.stamps.length;
+    setTimeout(async ()=>{
+      const seen = await hasSeenPrizePopup(prizeStage);
+      if(seen) return;
+      markPrizePopupSeen(prizeStage);
+      showPrizePopup(prizeStage, cfg);
+    }, 500);
+  }
   return wrap;
 }
 
@@ -906,14 +1209,15 @@ async function screenGotStamp(cfg, stores){
 async function screenRareCollection(cfg){
   const wrap = el('<div class="screen"></div>');
   const gotCount = state.participant ? state.participant.stamps.length : 0;
-  const r3 = gotCount>=3 ? await getGachaResult(3) : null;
-  const r5 = gotCount>=5 ? await getGachaResult(5) : null;
+  const GACHA_UNLOCK_STAMPS = {3:2, 5:4};
+  const r3 = gotCount>=GACHA_UNLOCK_STAMPS[3] ? await getGachaResult(3) : null;
+  const r5 = gotCount>=GACHA_UNLOCK_STAMPS[5] ? await getGachaResult(5) : null;
   function slotHtml(stage, result, unlocked){
     if(!unlocked){
-      return `<div class="card" style="text-align:center;"><div class="rare-icon rare-locked">${mysteryIconSVG(56)}</div><div style="margin-top:8px;font-weight:700;color:var(--ink-soft);">${stage}個達成で解放</div></div>`;
+      return `<div class="card" style="text-align:center;"><div class="rare-icon rare-locked">${mysteryIconSVG(56)}</div><div style="margin-top:8px;font-weight:700;color:var(--ink-soft);">${GACHA_UNLOCK_STAMPS[stage]}個達成で解放</div></div>`;
     }
     if(!result){
-      return `<div class="card" style="text-align:center;"><div style="font-weight:700;margin-bottom:10px;">✨ ${stage===3?'1':'2'}回目のレア生きものガチャが解放されました！</div><button class="btn-gacha" id="gachaBtn${stage}"><span class="gacha-machine">🟠<span class="gacha-handle">🕹️</span></span><span class="gacha-label">レア生きものガチャを回す！</span></button></div>`;
+      return `<div class="card" style="text-align:center;"><div style="font-weight:700;margin-bottom:10px;">✨ ${stage===3?'1':'2'}回目のレア生きものガチャが解放されました！</div><button class="btn-gacha2" id="gachaBtn${stage}">レア生きものガチャを回す</button></div>`;
     }
     const m = RARE_ICON_MAP[result];
     return `<div class="card" style="text-align:center;"><div class="rare-icon ${m?m.cls:''}">${rareIconSVG(result,70)}</div><div style="margin-top:8px;font-weight:900;">${result}</div></div>`;
@@ -921,8 +1225,8 @@ async function screenRareCollection(cfg){
   wrap.innerHTML = `
   <div class="topbar"><div class="logo">Malia</div><div class="sub">レア生きものコレクション</div></div>
   <h2 class="section-title" style="padding:0 4px;">✨ レア生きものコレクション</h2>
-  ${slotHtml(3, r3, gotCount>=3)}
-  ${slotHtml(5, r5, gotCount>=5)}
+  ${slotHtml(3, r3, gotCount>=GACHA_UNLOCK_STAMPS[3])}
+  ${slotHtml(5, r5, gotCount>=GACHA_UNLOCK_STAMPS[5])}
   <button class="btn btn-ghost" id="back">図鑑にもどる</button>
   `;
   const g3 = wrap.querySelector('#gachaBtn3'); if(g3) g3.onclick = ()=> go('gacha', {gachaStage:3});
@@ -940,11 +1244,11 @@ async function screenGacha(cfg){
     const m = RARE_ICON_MAP[creature];
     return `
       <div class="gacha-reveal">
-        ${['✨','⭐','💫','✨','⭐'].map((sp,i)=>`<span class="sparkle" style="left:${8+i*20}%;top:${i%2===0?0:14}px;animation-delay:${i*0.12}s;">${sp}</span>`).join('')}
-        <div class="gacha-glow"></div>
+        ${['✨','⭐','💫','✨','⭐','🌟','✨','💫'].map((sp,i)=>`<span class="sparkle" style="left:${2+i*13}%;top:${i%2===0?-4:16}px;animation-delay:${i*0.1}s;">${sp}</span>`).join('')}
+        <div class="gacha-glow aurora-ring"></div>
         <div class="rare-icon ${m?m.cls:''} rare-pop" style="margin:10px 0;">${rareIconSVG(creature,90)}</div>
       </div>
-      <div style="font-weight:900;font-size:17px;" class="rare-name-pop">${creature}</div>
+      <div style="font-weight:900;font-size:18px;" class="rare-name-pop rare-name-shine">${creature}</div>
       <div class="small-note">${note}</div>
       <button class="btn btn-primary" id="toCollection" style="margin-top:16px;">コレクションを見る</button>
     `;
@@ -1045,6 +1349,11 @@ async function screenComplete(cfg){
   const dt = new Date(ach.achievedAt);
   const dtStr = dt.getFullYear()+'/'+(dt.getMonth()+1)+'/'+dt.getDate()+' '+String(dt.getHours()).padStart(2,'0')+':'+String(dt.getMinutes()).padStart(2,'0');
   const confetti = ['🌸','✨','🎊','🌺','⭐'];
+  const entered3 = await getPrizeEntry(3);
+  const entered5 = await getPrizeEntry(5);
+  let unenteredRows = '';
+  if(!entered3) unenteredRows += prizeEntryRowHtml(3, false);
+  if(!entered5) unenteredRows += prizeEntryRowHtml(5, false);
   const wrap = el('<div></div>');
   wrap.innerHTML = `
   <div class="complete-screen">
@@ -1064,6 +1373,7 @@ async function screenComplete(cfg){
         <div style="font-weight:700;margin-bottom:8px;">${dtStr}</div>
         <div class="achieve-no">達成番号：<b>${ach.number}</b></div>
       </div>
+      ${unenteredRows ? `<div class="card prize-entry-card" style="margin-top:18px;text-align:left;"><h2 class="section-title">🎁 まだ応募していない景品があります</h2>${unenteredRows}</div>` : ''}
       <div class="card" style="margin-top:18px;text-align:left;">
         <div style="font-weight:700;margin-bottom:8px;">📸 この画面をスクリーンショットして、以下へ送ってください</div>
         ${cfg.sendMethods.line? `<div class="info-line"><span class="ico">💬</span><a href="${cfg.lineUrl}" target="_blank">Malia公式LINE</a></div>`:''}
@@ -1076,6 +1386,7 @@ async function screenComplete(cfg){
   </div>`;
   wrap.querySelector('#backTop').onclick = ()=> go('card');
   wrap.querySelector('#toCert').onclick = ()=> go('certificate');
+  wirePrizeSection(wrap, cfg);
   return wrap;
 }
 
