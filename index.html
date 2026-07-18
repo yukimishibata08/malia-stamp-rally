@@ -723,6 +723,16 @@ async function screenCard(cfg, stores){
   }).join('');
   wrap.innerHTML = `
   <div class="topbar"><div class="logo">Malia</div><div class="sub">こんにちは、${p.nickname}さん</div></div>
+  <div class="card" style="text-align:center;">
+    <button class="btn btn-outline-blue" id="homeGuideBtn">🏠 ホーム画面への追加方法を見る</button>
+    <div id="homeGuideText" style="display:none;text-align:left;margin-top:12px;">
+      <div class="small-note" style="background:#FFF3CD;color:#7a5b00;padding:10px 12px;border-radius:10px;font-weight:700;margin-bottom:10px;">
+        ⚠️ この案内を開いた今の画面のまま追加してください。別のページを開いてから追加すると、スタンプ状況が引き継がれない場合があります。
+      </div>
+      <div class="info-line"><span class="ico">🍎</span><span><b>iPhone(Safari)：</b>画面下の共有ボタンを押す →「ホーム画面に追加」を選んでください</span></div>
+      <div class="info-line"><span class="ico">🤖</span><span><b>Android：</b>ブラウザのメニューを開く →「ホーム画面に追加」または「アプリをインストール」を選んでください</span></div>
+    </div>
+  </div>
   <div class="card">
     <h2 class="section-title">📖 湘南の夏 生きもの図鑑</h2>
     <div class="stamp-grid">${gridHtml}</div>
@@ -750,6 +760,9 @@ async function screenCard(cfg, stores){
   <button class="btn btn-secondary" id="listBtn">🏝️ 店舗一覧を見る</button>
   `;
   wrap.querySelector('#listBtn').onclick = ()=> go('storeList',{storeListTarget:'participant'});
+  wrap.querySelector('#homeGuideBtn').onclick = ()=>{
+    wrap.querySelector('#homeGuideText').style.display = 'block';
+  };
   const cb = wrap.querySelector('#toComplete');
   if(cb) cb.onclick = ()=> go('complete');
   const rareBtn = wrap.querySelector('#rareBtn');
@@ -1579,7 +1592,6 @@ function adminSettings(cfg){
   const params = new URLSearchParams(location.search);
   const storeParam = params.get('store');
   await boot();
-  showDebugPanel();
   if(storeParam){
     const stores = await getStoresDB();
     if(stores.find(s=>s.id===storeParam)){
@@ -1588,33 +1600,6 @@ function adminSettings(cfg){
     }
   }
 })();
-
-/* ============ 原因確認用の一時的なデバッグ表示（確認後に削除予定） ============ */
-function showDebugPanel(){
-  try{
-    const isStandalone = (window.navigator.standalone === true) ||
-      (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches);
-    const rParam = getUrlParam('r');
-    const deviceToken = localStorage.getItem('malia_device_token');
-    const p = state.participant;
-
-    const lines = [
-      ['現在の完全なURL', location.href],
-      ['rパラメータ', rParam ? rParam : '（なし）'],
-      ['表示モード', isStandalone ? 'ホーム画面（standalone）' : 'ブラウザ（通常タブ）'],
-      ['localStorageの端末トークン', deviceToken ? deviceToken : '（なし）'],
-      ['読み込めた参加者', p ? (p.nickname + '（獲得スタンプ ' + p.stamps.length + '個 / restore_token: ' + (p.restore_token || 'なし') + '）') : '（参加者なし＝未登録として扱われています）'],
-    ];
-
-    const panel = document.createElement('div');
-    panel.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:99999;background:#111;color:#0f0;font-size:11px;line-height:1.6;padding:10px 12px;white-space:pre-wrap;word-break:break-all;font-family:monospace;max-height:50vh;overflow:auto;';
-    panel.innerHTML = '<b style="color:#ff0;">【確認用デバッグ表示（あとで削除します）】</b><br>' +
-      lines.map(([k,v])=>`<b>${k}：</b>${v}`).join('<br>');
-    document.body.appendChild(panel);
-  }catch(e){
-    console.error('debug panel failed', e);
-  }
-}
 </script>
 </body>
 </html>
