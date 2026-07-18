@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>復元トークン 動作確認用テスト</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<style>
+body{font-family:sans-serif;background:#FBF8F2;margin:0;padding:16px;color:#333;}
+.box{background:#fff;border-radius:14px;padding:16px;margin-bottom:14px;box-shadow:0 4px 12px rgba(0,0,0,.06);}
+h2{font-size:15px;margin:0 0 8px;}
+.row{font-size:13px;margin:4px 0;word-break:break-all;}
+.row b{color:#333;}
+.ok{color:#2E8B4A;font-weight:700;}
+.ng{color:#C0555F;font-weight:700;}
+.warn{background:#FFF3CD;color:#7a5b00;padding:8px 10px;border-radius:8px;font-size:12.5px;margin-bottom:14px;}
+input{width:100%;padding:10px;border-radius:8px;border:1px solid #ddd;font-size:14px;margin-bottom:8px;box-sizing:border-box;}
+button{width:100%;padding:12px;border:none;border-radius:10px;background:#FF7A45;color:#fff;font-weight:700;font-size:14px;cursor:pointer;margin-bottom:8px;}
+button.secondary{background:#fff;color:#FF7A45;border:2px solid #FF7A45;}
+.log{background:#111;color:#0f0;font-size:11px;padding:10px;border-radius:8px;max-height:200px;overflow:auto;white-space:pre-wrap;}
+</style>
+</head>
+<body>
+
+<div class="box">
+<h2>⚙️ Supabase接続設定(必ず書き換えてください)</h2>
+<div class="row">下の2行に、ご自身のSupabaseのProject URLとanonキーを入力して保存してください。</div>
+</div>
+
+<div id="unconfigured" class="box" style="display:none;">
+  <p class="ng">SUPABASE_URL / SUPABASE_ANON_KEY が未設定です。ファイル内の該当箇所を書き換えて保存し、開き直してください。</p>
+</div>
+
+<div id="app" style="display:none;">
+
+  <div class="box">
+    <h2>📍 現在のURL情報</h2>
+    <div class="row"><b>store パラメータ：</b><span id="curStore">-</span></div>
+    <div class="row"><b>r（復元トークン）パラメータ：</b><span id="curR">-</span></div>
+  </div>
+
+  <div class="box" id="joinBox" style="display:none;">
+    <h2>✏️ ニックネーム登録(テスト用)</h2>
+    <input type="text" id="nickInput" placeholder="例）テストゆき">
+    <button id="joinBtn">登録する</button>
+  </div>
+
+  <div class="box" id="infoBox" style="display:none;">
+    <h2>👤 復元された参加者情報</h2>
+    <div class="row"><b>ニックネーム：</b><span id="infoNick">-</span></div>
+    <div class="row"><b>participant_id：</b><span id="infoId">-</span></div>
+    <div class="row"><b>device_token（この端末）：</b><span id="infoDevice">-</span></div>
+    <div class="row"><b>restore_token：</b><span id="infoToken">-</span></div>
+    <div class="row"><b>獲得済みスタンプ数：</b><span id="infoStamps">-</span></div>
+    <div class="row"><b>復元経路：</b><span id="infoSource">-</span></div>
+  </div>
+
+  <div id="saveGuide" class="box" style="display:none;">
+    <h2>💾 このページを保存すると、いつでも自分の図鑑を見られます</h2>
+    <button class="secondary" id="howBookmark">ブックマーク方法を見る</button>
+    <button class="secondary" id="howHome">ホーム画面への追加方法を見る</button>
+    <div id="howText" class="row" style="display:none;margin-top:8px;"></div>
+  </div>
+
+  <div id="notReadyGuide" class="box" style="display:none;">
+    <p class="row">保存用URLを準備しています。少し操作すると表示されます。</p>
+  </div>
+
+  <div class="box">
+    <h2>🔗 テスト操作</h2>
+    <button class="secondary" id="openNewTabBtn">今のURLを新しいタブで開く（復元テスト）</button>
+    <button class="secondary" id="reloadBtn">このページを再読み込み（ホーム画面から開いた状態を再現）</button>
+  </div>
+
+  <div class="box">
+    <h2>🪵 ログ</h2>
+    <div class="log" id="logArea"></div>
+  </div>
+
+</div>
+
+<script>
+/* ↓↓↓ この2つを、ご自身のSupabaseプロジェクトの値に書き換えてください ↓↓↓ */
+const SUPABASE_URL = 'https://qaugcybfnqgeftpihojy.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFhdWdjeWJmbnFnZWZ0cGlob2p5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM4MzI5MzEsImV4cCI6MjA5OTQwODkzMX0.zEDGFD87PAU3mfctp4ESOrfw55JKNr5_pwTyXJeMn9s';
+/* ↑↑↑ ここまで ↑↑↑ */
+const SUPABASE_CONFIGURED = SUPABASE_URL.indexOf('YOUR_SUPABASE_URL_HERE')===-1 && SUPABASE_ANON_KEY.indexOf('YOUR_SUPABASE_ANON_KEY_HERE')===-1;
+const sb = SUPABASE_CONFIGURED ? supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
+
+function log(msg){
+  const el = document.getElementById('logArea');
+  const t = new Date().toLocaleTimeString();
+  el.textContent += `[${t}] ${msg}\n`;
+  el.scrollTop = el.scrollHeight;
+  console.log(msg);
+}
+
+/* ---- 端末トークン（既存の自動復元の仕組み。本番と同じ考え方） ---- */
+function getDeviceToken(){
+  let t = localStorage.getItem('malia_device_token');
+  if(!t){ t = 'dev_'+Math.random().toString(36).slice(2)+Date.now().toString(36); localStorage.setItem('malia_device_token', t); }
+  return t;
+}
+
+/* ---- URLを、既存のパラメータ(store等)を壊さずに操作するための共通関数 ---- */
+function getUrlParam(name){
+  return new URLSearchParams(location.search).get(name);
+}
+function setUrlParamPreserveOthers(name, value){
+  const url = new URL(location.href);
+  url.searchParams.set(name, value);
+  history.replaceState(null, '', url.toString());
+}
+
+/* ---- 参加者の読み書き ---- */
+async function findParticipantByRestoreToken(token){
+  try{
+    const { data, error } = await sb.from('participants').select('*').eq('restore_token', token).maybeSingle();
+    if(error || !data) return null;
+    return data;
+  }catch(e){ log('restore_token検索エラー: '+e.message); return null; }
+}
+async function findParticipantByDeviceToken(token){
+  try{
+    const { data, error } = await sb.from('participants').select('*').eq('device_token', token).maybeSingle();
+    if(error || !data) return null;
+    return data;
+  }catch(e){ log('device_token検索エラー: '+e.message); return null; }
+}
+async function createParticipant(nickname){
+  const deviceToken = getDeviceToken();
+  const { data, error } = await sb.from('participants').insert({device_token:deviceToken, nickname}).select().single();
+  if(error) throw error;
+  return data;
+}
+async function getStampCount(participantId){
+  try{
+    const { data, error } = await sb.from('participant_stamps').select('store_id').eq('participant_id', participantId);
+    if(error || !data) return 0;
+    return data.length;
+  }catch(e){ return 0; }
+}
+
+/* ---- 復元トークンの発行（失敗しても通常機能は止めない） ---- */
+async function ensureRestoreToken(participant){
+  if(participant.restore_token){ return participant.restore_token; }
+  try{
+    const { data, error } = await sb.rpc('issue_restore_token', { p_device_token: participant.device_token });
+    if(error){
+      log('restore_token 発行RPCでエラー（通常機能には影響しません）: '+error.message);
+      return null;
+    }
+    if(!data){
+      log('restore_token を取得できませんでした（未発行のまま続行します）');
+      return null;
+    }
+    log('restore_token を発行しました（issue_restore_token 関数経由）');
+    participant.restore_token = data;
+    return data;
+  }catch(e){
+    log('restore_token 発行処理で例外が発生（通常機能には影響しません）: '+e.message);
+    return null;
+  }
+}
+
+function renderInfo(participant, source, stampCount){
+  document.getElementById('infoBox').style.display='block';
+  document.getElementById('infoNick').textContent = participant.nickname;
+  document.getElementById('infoId').textContent = participant.id;
+  document.getElementById('infoDevice').textContent = participant.device_token;
+  document.getElementById('infoToken').textContent = participant.restore_token || '（未発行）';
+  document.getElementById('infoStamps').textContent = stampCount;
+  document.getElementById('infoSource').textContent = source;
+}
+
+function showSaveGuideIfReady(participant){
+  const ready = !!(participant.restore_token && getUrlParam('r') === participant.restore_token);
+  document.getElementById('saveGuide').style.display = ready ? 'block' : 'none';
+  document.getElementById('notReadyGuide').style.display = ready ? 'none' : 'block';
+}
+
+function updateCurrentUrlDisplay(){
+  document.getElementById('curStore').textContent = getUrlParam('store') || '（なし）';
+  document.getElementById('curR').textContent = getUrlParam('r') || '（なし）';
+}
+
+async function afterParticipantReady(participant, source){
+  updateCurrentUrlDisplay();
+  const stampCount = await getStampCount(participant.id);
+  renderInfo(participant, source, stampCount);
+
+  const token = await ensureRestoreToken(participant);
+  if(token){
+    setUrlParamPreserveOthers('r', token);
+    log('URLに r（復元トークン）を反映しました。store パラメータは維持されています。');
+    updateCurrentUrlDisplay();
+  }
+  showSaveGuideIfReady(participant);
+
+  document.getElementById('openNewTabBtn').onclick = ()=>{ window.open(location.href, '_blank'); };
+  document.getElementById('reloadBtn').onclick = ()=>{ location.reload(); };
+}
+
+document.getElementById('howBookmark').onclick = ()=>{
+  const el = document.getElementById('howText');
+  el.style.display='block';
+  el.textContent = 'スマホ・PCのブラウザのメニューから「ブックマークに追加」または「お気に入りに追加」を選んでください（星マークのアイコンの場合もあります）。';
+};
+document.getElementById('howHome').onclick = ()=>{
+  const el = document.getElementById('howText');
+  el.style.display='block';
+  el.textContent = 'iPhone（Safari）：共有ボタン→「ホーム画面に追加」。Android（Chrome）：右上のメニュー→「ホーム画面に追加」。';
+};
+
+async function init(){
+  if(!SUPABASE_CONFIGURED){
+    document.getElementById('unconfigured').style.display='block';
+    return;
+  }
+  document.getElementById('app').style.display='block';
+  updateCurrentUrlDisplay();
+
+  const rToken = getUrlParam('r');
+  if(rToken){
+    log('URLに r があります。restore_token で参加者を検索します。');
+    const found = await findParticipantByRestoreToken(rToken);
+    if(found){
+      log('restore_token から参加者を復元しました。');
+      await afterParticipantReady(found, 'URLの復元トークン（r）から復元');
+      return;
+    }
+    log('この restore_token に一致する参加者が見つかりませんでした。端末の自動復元を試します。');
+  }
+
+  const deviceToken = getDeviceToken();
+  const byDevice = await findParticipantByDeviceToken(deviceToken);
+  if(byDevice){
+    log('この端末の device_token から参加者を復元しました（既存の自動復元）。');
+    await afterParticipantReady(byDevice, 'この端末の自動復元（device_token）');
+    return;
+  }
+
+  log('この端末に紐づく参加者が見つかりません。新規登録が必要です。');
+  document.getElementById('joinBox').style.display='block';
+  document.getElementById('joinBtn').onclick = async ()=>{
+    const nick = document.getElementById('nickInput').value.trim();
+    if(!nick){ alert('ニックネームを入力してください'); return; }
+    try{
+      const p = await createParticipant(nick);
+      log('新規参加者を登録しました。');
+      document.getElementById('joinBox').style.display='none';
+      await afterParticipantReady(p, '新規登録');
+    }catch(e){
+      log('登録エラー: '+e.message);
+      alert('登録に失敗しました。もう一度お試しください。');
+    }
+  };
+}
+init();
+</script>
+</body>
+</html>
