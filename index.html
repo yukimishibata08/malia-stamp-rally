@@ -1049,7 +1049,7 @@ async function screenCard(cfg, stores){
   <div class="card" style="text-align:center;">
     <div style="font-weight:700;">🎁 参加賞をゲット！</div>
     <button class="btn btn-secondary" id="coloringBtn" style="margin-top:10px;">塗り絵PDFを見る</button>
-    <div class="small-note" style="margin-top:6px;">開いた画面の右上や下部にある保存・印刷・共有のアイコンから、A4サイズのまま保存・印刷できます</div>
+    <div class="small-note" style="margin-top:6px;">タップすると、SafariでPDFが開きます。共有アイコンから「プリント」または「"ファイル"に保存」を選ぶと、A4サイズのまま保存・印刷できます</div>
     <div id="coloringMsg" class="small-note" style="display:none;"></div>
   </div>` : ''}
   ${gotCount>=2 ? `<button class="btn btn-outline-blue" id="rareBtn">✨ レア生きものコレクション</button>` : ''}
@@ -1071,8 +1071,17 @@ async function screenCard(cfg, stores){
     const msgEl = wrap.querySelector('#coloringMsg');
     try{
       const res = await fetch('coloring.pdf', {method:'HEAD'});
-      if(res.ok){ window.open('coloring.pdf', '_blank'); }
-      else { msgEl.textContent='ぬりえは準備中です。しばらくお待ちください。'; msgEl.style.display='block'; }
+      if(res.ok){
+        const link = document.createElement('a');
+        link.href = 'coloring.pdf';
+        link.target = '_blank';
+        link.rel = 'noopener noreferrer';
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+      } else {
+        msgEl.textContent='ぬりえは準備中です。しばらくお待ちください。'; msgEl.style.display='block';
+      }
     }catch(e){ msgEl.textContent='ぬりえは準備中です。しばらくお待ちください。'; msgEl.style.display='block'; }
   };
   return wrap;
