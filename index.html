@@ -285,6 +285,16 @@ function getDeviceToken(){
   if(!t){ t = 'dev_'+Math.random().toString(36).slice(2)+Date.now().toString(36); localStorage.setItem('malia_device_token', t); }
   return t;
 }
+function getUrlParam(name){
+  return new URLSearchParams(location.search).get(name);
+}
+function setUrlParamPreserveOthers(name, value){
+  try{
+    const url = new URL(location.href);
+    url.searchParams.set(name, value);
+    history.replaceState(null, '', url.toString());
+  }catch(e){ console.error('URL更新に失敗', e); }
+}
 
 async function getConfigDB(){
   try{
@@ -327,14 +337,33 @@ async function loadParticipantByDeviceToken(){
     const { data, error } = await sb.from('participants').select('*').eq('device_token', token).maybeSingle();
     if(error || !data) return null;
     const { data: stampRows } = await sb.from('participant_stamps').select('store_id').eq('participant_id', data.id);
-    return { id:data.id, nickname:data.nickname, stamps:(stampRows||[]).map(r=>r.store_id) };
+    return { id:data.id, nickname:data.nickname, device_token:data.device_token, restore_token:data.restore_token, stamps:(stampRows||[]).map(r=>r.store_id) };
   }catch(e){ console.error('loadParticipant failed', e); return null; }
+}
+async function findParticipantByRestoreToken(token){
+  try{
+    const { data, error } = await sb.from('participants').select('*').eq('restore_token', token).maybeSingle();
+    if(error || !data) return null;
+    const { data: stampRows } = await sb.from('participant_stamps').select('store_id').eq('participant_id', data.id);
+    return { id:data.id, nickname:data.nickname, device_token:data.device_token, restore_token:data.restore_token, stamps:(stampRows||[]).map(r=>r.store_id) };
+  }catch(e){ console.error('findByRestoreToken failed', e); return null; }
+}
+/* 復元用URL(?r=...)の発行。失敗しても通常のスタンプラリー機能は止めない */
+async function ensureRestoreToken(participant){
+  if(!participant) return null;
+  if(participant.restore_token){ return participant.restore_token; }
+  try{
+    const { data, error } = await sb.rpc('issue_restore_token', { p_device_token: participant.device_token });
+    if(error || !data) return null;
+    participant.restore_token = data;
+    return data;
+  }catch(e){ console.error('restore_token発行失敗（通常機能には影響しません）', e); return null; }
 }
 async function createParticipantDB(nickname){
   const token = getDeviceToken();
   const { data, error } = await sb.from('participants').insert({device_token:token, nickname}).select().single();
   if(error) throw error;
-  return { id:data.id, nickname:data.nickname, stamps:[] };
+  return { id:data.id, nickname:data.nickname, device_token:data.device_token, restore_token:data.restore_token, stamps:[] };
 }
 
 /* ---- レア生きものガチャ（rare_gacha_results テーブルのみ使用） ---- */
@@ -532,8 +561,19 @@ function remainMessage(gotCount, total){
 
 /* =============== 初期ロード =============== */
 async function boot(){
+  const rToken = getUrlParam('r');
+  if(rToken){
+    const byToken = await findParticipantByRestoreToken(rToken);
+    if(byToken){ state.participant = byToken; go('card'); return; }
+  }
   const p = await loadParticipantByDeviceToken();
-  if(p){ state.participant = p; go('card'); return; }
+  if(p){
+    state.participant = p;
+    const token = await ensureRestoreToken(p);
+    if(token){ setUrlParamPreserveOthers('r', token); }
+    go('card');
+    return;
+  }
   go('top');
 }
 
@@ -636,6 +676,8 @@ function screenJoin(cfg){
       console.error('join failed', e);
       errEl.textContent='登録に失敗しました。もう一度お試しください。'; errEl.style.display='block'; return;
     }
+    const token = await ensureRestoreToken(state.participant);
+    if(token){ setUrlParamPreserveOthers('r', token); }
     if(state.pendingStoreId){
       const id = state.pendingStoreId; state.pendingStoreId = null;
       go('codeInput', {currentStoreId:id, codeError:''});
@@ -674,6 +716,13 @@ async function screenCard(cfg, stores){
     <div id="coloringMsg" class="small-note" style="display:none;"></div>
   </div>` : ''}
   ${gotCount>=3 ? `<button class="btn btn-outline-blue" id="rareBtn">✨ レア生きものコレクション</button>` : ''}
+  ${(p.restore_token && getUrlParam('r')===p.restore_token) ? `
+  <div class="card" style="text-align:center;">
+    <div style="font-weight:700;">💾 このページを保存すると、いつでも自分の図鑑を見られます</div>
+    <button class="btn btn-secondary" id="howBookmarkBtn" style="margin-top:10px;">ブックマーク方法を見る</button>
+    <button class="btn btn-secondary" id="howHomeBtn" style="margin-top:8px;">ホーム画面への追加方法を見る</button>
+    <div id="howText" class="small-note" style="display:none;margin-top:8px;"></div>
+  </div>` : ''}
   <div class="card" style="text-align:center;">
     <div style="font-size:13.5px;font-weight:700;">📷 スマートフォンの標準カメラを開いて、<br>店頭のQRコードを読み取ってください</div>
     <div class="small-note" style="margin-top:6px;">iPhone・Androidどちらも、普段お使いのカメラアプリでそのまま読み取れます</div>
@@ -685,6 +734,18 @@ async function screenCard(cfg, stores){
   if(cb) cb.onclick = ()=> go('complete');
   const rareBtn = wrap.querySelector('#rareBtn');
   if(rareBtn) rareBtn.onclick = ()=> go('rareCollection');
+  const howBookmarkBtn = wrap.querySelector('#howBookmarkBtn');
+  if(howBookmarkBtn) howBookmarkBtn.onclick = ()=>{
+    const el2 = wrap.querySelector('#howText');
+    el2.style.display = 'block';
+    el2.textContent = 'ブラウザのメニューから「ブックマークに追加」または「お気に入りに追加」を選んでください（★マークの場合もあります）。';
+  };
+  const howHomeBtn = wrap.querySelector('#howHomeBtn');
+  if(howHomeBtn) howHomeBtn.onclick = ()=>{
+    const el2 = wrap.querySelector('#howText');
+    el2.style.display = 'block';
+    el2.textContent = 'iPhone(Safari)：共有ボタン →「ホーム画面に追加」。Android(Chrome)：右上のメニュー →「ホーム画面に追加」。';
+  };
   const colBtn = wrap.querySelector('#coloringBtn');
   if(colBtn) colBtn.onclick = async ()=>{
     const msgEl = wrap.querySelector('#coloringMsg');
