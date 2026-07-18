@@ -206,6 +206,15 @@ body.cert-zoomed .cert4-frame{
 .store-row img{width:56px;height:56px;border-radius:12px;object-fit:cover;background:#eee;flex-shrink:0;}
 .store-row .name{font-weight:700;font-size:14.5px;}
 .store-row .status{font-size:11.5px;margin-top:2px;}
+.store-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:6px;}
+.store-card{
+  display:flex;flex-direction:column;background:#fff;border-radius:14px;padding:12px;
+  box-shadow:var(--shadow);cursor:pointer;height:100%;
+}
+.store-card-name{font-weight:700;font-size:13.5px;line-height:1.35;word-break:break-word;margin-bottom:4px;}
+.store-card-addr{font-size:11px;color:var(--ink-soft);line-height:1.45;word-break:break-word;flex:1;margin-bottom:8px;}
+.store-card .status{font-size:11px;margin-bottom:8px;}
+.store-card-mapbtn{font-size:11.5px;padding:9px 6px;margin-top:auto;}
 .status.got{color:#4CAF7D;font-weight:700;}
 .status.not{color:var(--ink-soft);}
 
@@ -277,7 +286,7 @@ table.admin-table th{color:var(--ink-soft);font-weight:700;}
 <script>
 /* =============== Supabase 接続設定 =============== */
 /* ↓↓↓ この2つを、ご自身のSupabaseプロジェクトの値に書き換えてください ↓↓↓ */
-const SUPABASE_URL = 'https://qaugcybfnqgeftpihojy.supabase.co';
+const SUPABASE_URL = 'https://qaugcybfnqgeftpihojy.supabase.co/';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFhdWdjeWJmbnFnZWZ0cGlob2p5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM4MzI5MzEsImV4cCI6MjA5OTQwODkzMX0.zEDGFD87PAU3mfctp4ESOrfw55JKNr5_pwTyXJeMn9s';
 /* ↑↑↑ ここまで ↑↑↑ */
 const SUPABASE_CONFIGURED = SUPABASE_URL.indexOf('YOUR_SUPABASE_URL_HERE')===-1 && SUPABASE_ANON_KEY.indexOf('YOUR_SUPABASE_ANON_KEY_HERE')===-1;
@@ -326,11 +335,11 @@ async function getStoresDB(){
   try{
     const { data, error } = await sb.from('stores').select('*').order('id');
     if(error || !data || !data.length) return DEFAULT_STORES;
-    return data.map(s=>({id:s.id, name:s.name, icon:s.icon, code:s.code, photo:s.photo||'', address:s.address||'', hours:s.hours||'', homepage:s.homepage||'', instagram:s.instagram||'', coupon:s.coupon||''}));
+    return data.map(s=>({id:s.id, name:s.name, icon:s.icon, code:s.code, photo:s.photo||'', address:s.address||'', hours:s.hours||'', homepage:s.homepage||'', instagram:s.instagram||'', coupon:s.coupon||'', mapUrl:s.map_url||''}));
   }catch(e){ console.error('getStoresDB failed', e); return DEFAULT_STORES; }
 }
 async function saveStoreDB(s){
-  const { error } = await sb.from('stores').upsert({id:s.id, name:s.name, icon:s.icon, code:s.code, photo:s.photo, address:s.address, hours:s.hours, homepage:s.homepage, instagram:s.instagram, coupon:s.coupon});
+  const { error } = await sb.from('stores').upsert({id:s.id, name:s.name, icon:s.icon, code:s.code, photo:s.photo, address:s.address, hours:s.hours, homepage:s.homepage, instagram:s.instagram, coupon:s.coupon, map_url:s.mapUrl||null});
   if(error) throw error;
 }
 async function deleteStoreDB(id){ await sb.from('stores').delete().eq('id', id); }
@@ -760,21 +769,33 @@ async function screenCard(cfg, stores){
 async function screenStoreList(cfg, stores){
   const p = state.participant;
   const wrap = el('<div class="screen"></div>');
-  const rows = stores.map(s=>{
+  const cards = stores.map(s=>{
     const got = p && p.stamps.includes(s.id);
-    return `<div class="store-row" data-id="${s.id}">
-      <img src="${s.photo||'https://images.weserv.nl/?url=placehold.co/100x100/EFE4D0/9c8a7a?text=Malia'}">
-      <div><div class="name">${s.name}</div><div class="status ${got?'got':'not'}">${got?'✅ スタンプ獲得済み':'未獲得'}</div></div>
+    const mapHref = s.mapUrl ? s.mapUrl : ('https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(s.address||s.name));
+    return `<div class="store-card" data-id="${s.id}">
+      <div class="store-card-name">${s.name}</div>
+      <div class="store-card-addr">${s.address||'住所未設定'}</div>
+      <div class="status ${got?'got':'not'}">${got?'✅ スタンプ獲得済み':'未獲得'}</div>
+      <button class="btn btn-outline-blue store-card-mapbtn" data-map="${mapHref}">📍 Googleマップで見る</button>
     </div>`;
   }).join('');
   wrap.innerHTML = `
   <div class="screen" style="padding-top:6px;">
   <h2 class="section-title">🏝️ 参加店舗一覧</h2>
-  ${rows}
+  <div class="store-grid">${cards}</div>
   <button class="btn btn-ghost" id="back">戻る</button>
   </div>`;
-  wrap.querySelectorAll('.store-row').forEach(r=>{
-    r.onclick = ()=> go('storeDetail', {currentStoreId:r.dataset.id});
+  wrap.querySelectorAll('.store-card').forEach(r=>{
+    r.addEventListener('click', (e)=>{
+      if(e.target.closest('.store-card-mapbtn')) return;
+      go('storeDetail', {currentStoreId:r.dataset.id});
+    });
+  });
+  wrap.querySelectorAll('.store-card-mapbtn').forEach(b=>{
+    b.addEventListener('click', (e)=>{
+      e.stopPropagation();
+      window.open(b.dataset.map, '_blank', 'noopener');
+    });
   });
   wrap.querySelector('#back').onclick = ()=> go(state.participant? 'card':'top');
   return wrap;
@@ -1301,8 +1322,9 @@ async function screenAdminHome(cfg, stores){
 async function adminStores(cfg, stores){
   const wrap = el('<div></div>');
   if(state.editingStore){
-    const s = stores.find(x=>x.id===state.editingStore) || {id:'', name:'', icon:'turtle', code:'', photo:'', address:'', hours:'', homepage:'', instagram:'', coupon:''};
+    const s = stores.find(x=>x.id===state.editingStore) || {id:'', name:'', icon:'turtle', code:'', photo:'', address:'', hours:'', homepage:'', instagram:'', coupon:'', mapUrl:''};
     const isNew = !stores.find(x=>x.id===state.editingStore);
+    let currentPhoto = s.photo || '';
     wrap.innerHTML = `
     <div class="card">
       <h2 class="section-title">${isNew?'➕ 店舗を追加':'✏️ 店舗を編集'}</h2>
@@ -1311,8 +1333,15 @@ async function adminStores(cfg, stores){
       <label>割り当てる生き物</label>
       <select id="f_icon">${ICON_KEYS.map(k=>`<option value="${k}" ${s.icon===k?'selected':''}>${ICON_LABELS[k]}</option>`).join('')}</select>
       <label>発見用の4桁コード（お店に掲示）</label><input id="f_code" value="${s.code||''}" maxlength="4">
-      <label>写真URL</label><input id="f_photo" value="${s.photo}">
+      <label>店舗写真</label>
+      <div style="margin-bottom:12px;">
+        <img id="photoPreview" src="${currentPhoto || 'https://images.weserv.nl/?url=placehold.co/300x200/F3ECE2/9c8a7a?text=写真準備中'}" style="width:100%;max-width:260px;aspect-ratio:3/2;object-fit:cover;border-radius:12px;display:block;margin-bottom:8px;background:#F3ECE2;">
+        <input type="file" id="f_photo_file" accept="image/jpeg,image/png,image/webp" style="display:none;">
+        <button type="button" class="btn btn-secondary" id="photoUploadBtn">📷 写真をアップロード（差し替え）</button>
+        <div id="photoUploadMsg" class="small-note" style="display:none;"></div>
+      </div>
       <label>住所</label><input id="f_address" value="${s.address}">
+      <label>GoogleマップのURL（空欄なら住所から自動で作成されます）</label><input id="f_mapurl" value="${s.mapUrl||''}" placeholder="https://maps.app.goo.gl/...">
       <label>営業時間</label><input id="f_hours" value="${s.hours}">
       <label>ホームページURL</label><input id="f_homepage" value="${s.homepage}">
       <label>Instagram URL</label><input id="f_instagram" value="${s.instagram}">
@@ -1321,14 +1350,44 @@ async function adminStores(cfg, stores){
       <button class="btn btn-ghost" id="cancel">キャンセル</button>
     </div>`;
     wrap.querySelector('#cancel').onclick = ()=>{ state.editingStore=null; render(); };
+
+    const ALLOWED_TYPES = ['image/jpeg','image/png','image/webp'];
+    const MAX_SIZE = 5*1024*1024;
+    wrap.querySelector('#photoUploadBtn').onclick = ()=> wrap.querySelector('#f_photo_file').click();
+    wrap.querySelector('#f_photo_file').onchange = async (e)=>{
+      const file = e.target.files[0];
+      const msgEl = wrap.querySelector('#photoUploadMsg');
+      msgEl.style.display = 'none';
+      if(!file) return;
+      const storeId = wrap.querySelector('#f_id').value.trim();
+      if(!storeId){ msgEl.textContent = '先に店舗IDを入力してください。'; msgEl.style.display='block'; return; }
+      if(!ALLOWED_TYPES.includes(file.type)){ msgEl.textContent = 'JPEG・PNG・WebPの画像のみアップロードできます。'; msgEl.style.display='block'; return; }
+      if(file.size > MAX_SIZE){ msgEl.textContent = 'ファイルサイズは5MB以下にしてください。'; msgEl.style.display='block'; return; }
+      msgEl.textContent = 'アップロード中…'; msgEl.style.display='block';
+      try{
+        const path = storeId + '.img';
+        const { error: upErr } = await sb.storage.from('store-photos').upload(path, file, { upsert:true, contentType:file.type });
+        if(upErr) throw upErr;
+        const { data: pub } = sb.storage.from('store-photos').getPublicUrl(path);
+        const url = pub.publicUrl + '?t=' + Date.now();
+        currentPhoto = url;
+        wrap.querySelector('#photoPreview').src = url;
+        msgEl.textContent = '✔ アップロードが完了しました';
+      }catch(err){
+        console.error('photo upload failed', err);
+        msgEl.textContent = 'アップロードに失敗しました。もう一度お試しください。';
+      }
+    };
+
     wrap.querySelector('#save').onclick = async ()=>{
       const newS = {
         id: wrap.querySelector('#f_id').value.trim(),
         name: wrap.querySelector('#f_name').value.trim(),
         icon: wrap.querySelector('#f_icon').value,
         code: wrap.querySelector('#f_code').value.trim(),
-        photo: wrap.querySelector('#f_photo').value.trim(),
+        photo: currentPhoto,
         address: wrap.querySelector('#f_address').value.trim(),
+        mapUrl: wrap.querySelector('#f_mapurl').value.trim(),
         hours: wrap.querySelector('#f_hours').value.trim(),
         homepage: wrap.querySelector('#f_homepage').value.trim(),
         instagram: wrap.querySelector('#f_instagram').value.trim(),
