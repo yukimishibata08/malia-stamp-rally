@@ -299,7 +299,7 @@ table.admin-table th{color:var(--ink-soft);font-weight:700;}
 <script>
 /* =============== Supabase 接続設定 =============== */
 /* ↓↓↓ この2つを、ご自身のSupabaseプロジェクトの値に書き換えてください ↓↓↓ */
-const SUPABASE_URL = 'https://qaugcybfnqgeftpihojy.supabase.co';
+const SUPABASE_URL = 'https://qaugcybfnqgeftpihojy.supabase.co/';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFhdWdjeWJmbnFnZWZ0cGlob2p5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM4MzI5MzEsImV4cCI6MjA5OTQwODkzMX0.zEDGFD87PAU3mfctp4ESOrfw55JKNr5_pwTyXJeMn9s';
 /* ↑↑↑ ここまで ↑↑↑ */
 const SUPABASE_CONFIGURED = SUPABASE_URL.indexOf('YOUR_SUPABASE_URL_HERE')===-1 && SUPABASE_ANON_KEY.indexOf('YOUR_SUPABASE_ANON_KEY_HERE')===-1;
@@ -736,13 +736,6 @@ async function screenCard(cfg, stores){
     <div id="coloringMsg" class="small-note" style="display:none;"></div>
   </div>` : ''}
   ${gotCount>=3 ? `<button class="btn btn-outline-blue" id="rareBtn">✨ レア生きものコレクション</button>` : ''}
-  ${(p.restore_token && getUrlParam('r')===p.restore_token) ? `
-  <div class="card" style="text-align:center;">
-    <div style="font-weight:700;">💾 このページを保存すると、いつでも自分の図鑑を見られます</div>
-    <button class="btn btn-secondary" id="howBookmarkBtn" style="margin-top:10px;">ブックマーク方法を見る</button>
-    <button class="btn btn-secondary" id="howHomeBtn" style="margin-top:8px;">ホーム画面への追加方法を見る</button>
-    <div id="howText" class="small-note" style="display:none;margin-top:8px;"></div>
-  </div>` : ''}
   <div class="card" style="text-align:center;">
     <div style="font-size:13.5px;font-weight:700;">📷 スマートフォンの標準カメラを開いて、<br>店頭のQRコードを読み取ってください</div>
     <div class="small-note" style="margin-top:6px;">iPhone・Androidどちらも、普段お使いのカメラアプリでそのまま読み取れます</div>
@@ -754,18 +747,6 @@ async function screenCard(cfg, stores){
   if(cb) cb.onclick = ()=> go('complete');
   const rareBtn = wrap.querySelector('#rareBtn');
   if(rareBtn) rareBtn.onclick = ()=> go('rareCollection');
-  const howBookmarkBtn = wrap.querySelector('#howBookmarkBtn');
-  if(howBookmarkBtn) howBookmarkBtn.onclick = ()=>{
-    const el2 = wrap.querySelector('#howText');
-    el2.style.display = 'block';
-    el2.textContent = 'ブラウザのメニューから「ブックマークに追加」または「お気に入りに追加」を選んでください（★マークの場合もあります）。';
-  };
-  const howHomeBtn = wrap.querySelector('#howHomeBtn');
-  if(howHomeBtn) howHomeBtn.onclick = ()=>{
-    const el2 = wrap.querySelector('#howText');
-    el2.style.display = 'block';
-    el2.textContent = 'iPhone(Safari)：共有ボタン →「ホーム画面に追加」。Android(Chrome)：右上のメニュー →「ホーム画面に追加」。';
-  };
   const colBtn = wrap.querySelector('#coloringBtn');
   if(colBtn) colBtn.onclick = async ()=>{
     const msgEl = wrap.querySelector('#coloringMsg');
