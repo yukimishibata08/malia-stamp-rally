@@ -299,7 +299,7 @@ table.admin-table th{color:var(--ink-soft);font-weight:700;}
 <script>
 /* =============== Supabase 接続設定 =============== */
 /* ↓↓↓ この2つを、ご自身のSupabaseプロジェクトの値に書き換えてください ↓↓↓ */
-const SUPABASE_URL = 'https://qaugcybfnqgeftpihojy.supabase.co/';
+const SUPABASE_URL = 'https://qaugcybfnqgeftpihojy.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFhdWdjeWJmbnFnZWZ0cGlob2p5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM4MzI5MzEsImV4cCI6MjA5OTQwODkzMX0.zEDGFD87PAU3mfctp4ESOrfw55JKNr5_pwTyXJeMn9s';
 /* ↑↑↑ ここまで ↑↑↑ */
 const SUPABASE_CONFIGURED = SUPABASE_URL.indexOf('YOUR_SUPABASE_URL_HERE')===-1 && SUPABASE_ANON_KEY.indexOf('YOUR_SUPABASE_ANON_KEY_HERE')===-1;
@@ -586,48 +586,20 @@ function remainMessage(gotCount, total){
 }
 
 /* =============== 初期ロード =============== */
-function updateManifestForRestore(token){
-  try{
-    const manifest = {
-      name: "Malia おでかけスタンプラリー",
-      short_name: "Maliaラリー",
-      icons: [
-        {src: "icon-192.png", sizes: "192x192", type: "image/png"},
-        {src: "icon-512.png", sizes: "512x512", type: "image/png"}
-      ],
-      theme_color: "#FFDD1F",
-      background_color: "#FFFDF6",
-      display: "standalone",
-      start_url: location.pathname + (token ? ('?r=' + token) : '')
-    };
-    const blob = new Blob([JSON.stringify(manifest)], {type: 'application/json'});
-    const url = URL.createObjectURL(blob);
-    let link = document.querySelector('link[rel="manifest"]');
-    if(!link){
-      link = document.createElement('link');
-      link.rel = 'manifest';
-      document.head.appendChild(link);
-    }
-    link.setAttribute('href', url);
-  }catch(e){ console.error('manifestの更新に失敗しました（通常機能には影響しません）', e); }
-}
-
 async function boot(){
   const rToken = getUrlParam('r');
   if(rToken){
     const byToken = await findParticipantByRestoreToken(rToken);
-    if(byToken){ state.participant = byToken; updateManifestForRestore(byToken.restore_token); go('card'); return; }
+    if(byToken){ state.participant = byToken; go('card'); return; }
   }
   const p = await loadParticipantByDeviceToken();
   if(p){
     state.participant = p;
     const token = await ensureRestoreToken(p);
     if(token){ setUrlParamPreserveOthers('r', token); }
-    updateManifestForRestore(token || p.restore_token);
     go('card');
     return;
   }
-  updateManifestForRestore(null);
   go('top');
 }
 
@@ -726,7 +698,6 @@ function screenJoin(cfg){
     }
     const token = await ensureRestoreToken(state.participant);
     if(token){ setUrlParamPreserveOthers('r', token); }
-    updateManifestForRestore(token);
     if(state.pendingStoreId){
       const id = state.pendingStoreId; state.pendingStoreId = null;
       go('codeInput', {currentStoreId:id, codeError:''});
