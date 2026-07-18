@@ -1155,7 +1155,7 @@ function screenCodeInput(cfg, stores){
     </div>
     ${state.codeError? `<div class="err-msg">${state.codeError}</div>` : ''}
     <button class="btn btn-primary" id="submit">生き物を発見する</button>
-    <button class="btn btn-ghost" id="back">戻る</button>
+    <button class="btn btn-ghost" id="back">図鑑を見る</button>
   </div>`;
   const boxes = [0,1,2,3].map(i=>wrap.querySelector('#c'+i));
   boxes.forEach((b,i)=>{
@@ -1471,9 +1471,8 @@ async function screenCertificate(cfg){
     </div>
   </div>
   <div class="small-note" style="text-align:center;margin-top:8px;">タップすると拡大して確認できます</div>
-  <button class="btn btn-primary" id="saveImg" style="margin-top:10px;">画像として保存する</button>
-  <div id="saveMsg" class="small-note" style="display:none;text-align:center;"></div>
-  <button class="btn btn-ghost" id="back">もどる</button>
+  <div class="small-note" style="text-align:center;margin-top:10px;font-weight:700;">📸 この画面をスクリーンショットして保存してね</div>
+  <button class="btn btn-ghost" id="back" style="margin-top:14px;">もどる</button>
   `;
   const certFrame = wrap.querySelector('#certCard4');
   const certOverlay = wrap.querySelector('#certOverlay');
@@ -1507,24 +1506,6 @@ async function screenCertificate(cfg){
   certFrame.addEventListener('click', ()=>{ document.body.classList.toggle('cert-zoomed'); setTimeout(sizeCertificate, 260); });
 
   wrap.querySelector('#back').onclick = ()=> go('card');
-  wrap.querySelector('#saveImg').onclick = async ()=>{
-    const msgEl = wrap.querySelector('#saveMsg');
-    try{
-      if(!window.html2canvas){
-        await loadExternalScript('https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js');
-      }
-      sizeCertificate();
-      const canvas = await html2canvas(certFrame, {scale:3, useCORS:true, backgroundColor:null});
-      const link = document.createElement('a');
-      link.download = 'malia-certificate.png';
-      link.href = canvas.toDataURL('image/png');
-      link.click();
-    }catch(e){
-      console.error('cert save failed', e);
-      msgEl.textContent = '画像保存に失敗しました。画面をスクリーンショットして保存してください。';
-      msgEl.style.display = 'block';
-    }
-  };
   return wrap;
 }
 
