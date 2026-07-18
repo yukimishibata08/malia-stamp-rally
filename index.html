@@ -359,7 +359,7 @@ table.admin-table th{color:var(--ink-soft);font-weight:700;}
 <script>
 /* =============== Supabase 接続設定 =============== */
 /* ↓↓↓ この2つを、ご自身のSupabaseプロジェクトの値に書き換えてください ↓↓↓ */
-const SUPABASE_URL = 'https://qaugcybfnqgeftpihojy.supabase.co/';
+const SUPABASE_URL = 'https://qaugcybfnqgeftpihojy.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFhdWdjeWJmbnFnZWZ0cGlob2p5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM4MzI5MzEsImV4cCI6MjA5OTQwODkzMX0.zEDGFD87PAU3mfctp4ESOrfw55JKNr5_pwTyXJeMn9s';
 /* ↑↑↑ ここまで ↑↑↑ */
 const SUPABASE_CONFIGURED = SUPABASE_URL.indexOf('YOUR_SUPABASE_URL_HERE')===-1 && SUPABASE_ANON_KEY.indexOf('YOUR_SUPABASE_ANON_KEY_HERE')===-1;
@@ -457,14 +457,23 @@ async function getGachaResult(stage){
   if(!state.participant) return null;
   try{
     const { data, error } = await sb.from('rare_gacha_results').select('creature').eq('participant_id', state.participant.id).eq('stage', stage).maybeSingle();
-    if(error || !data) return null;
+    if(error){
+      console.error('[gacha] getGachaResult エラー', {stage, message:error.message, code:error.code, details:error.details, hint:error.hint});
+      return null;
+    }
+    if(!data) return null;
     return data.creature;
-  }catch(e){ console.error('getGachaResult failed', e); return null; }
+  }catch(e){ console.error('[gacha] getGachaResult 例外', e); return null; }
 }
 async function drawGachaDB(stage){
   // すでにこの回の結果がある場合は、新しく引き直さずそれを返す（通信エラー後の再試行でも安全にする）
   const existing = await getGachaResult(stage);
   if(existing){ return { creature: existing, alreadyDrawn:true }; }
+
+  if(!state.participant || !state.participant.id){
+    console.error('[gacha] drawGachaDB: state.participant が未確定のまま呼び出されました', state.participant);
+    throw new Error('participant not ready');
+  }
 
   let excluded = null;
   if(stage===5){ excluded = await getGachaResult(3); }
@@ -477,6 +486,7 @@ async function drawGachaDB(stage){
     try{
       const { error } = await sb.from('rare_gacha_results').insert({participant_id:participantId, stage, creature:pick});
       if(error){
+        console.error('[gacha] insert エラー (attempt '+(attempt+1)+'/3)', {stage, participantId, message:error.message, code:error.code, details:error.details, hint:error.hint});
         if(error.code==='23505'){
           const already = await getGachaResult(stage);
           return { creature: already, alreadyDrawn:true };
@@ -486,10 +496,30 @@ async function drawGachaDB(stage){
       return { creature: pick, alreadyDrawn:false };
     }catch(e){
       lastErr = e;
-      if(attempt<2){ await new Promise(r=>setTimeout(r, 400*(attempt+1))); }
+      console.error('[gacha] insert 例外 (attempt '+(attempt+1)+'/3)', e);
+      if(attempt<2){ await new Promise(r=>setTimeout(r, 500*(attempt+1))); }
     }
   }
+  // 3回とも失敗した場合でも、実は書き込み自体は成功していて応答だけ届かなかった可能性があるため、最後にもう一度だけ確認する
+  const recheck = await getGachaResult(stage);
+  if(recheck){ return { creature: recheck, alreadyDrawn:true }; }
+  console.error('[gacha] 3回再試行しても保存できませんでした', {stage, participantId, lastError: lastErr});
+  logGachaError(stage, lastErr);
   throw lastErr;
+}
+async function logGachaError(stage, err){
+  // 参加者の画面には一切表示せず、管理画面でだけ確認できるよう記録する（この記録自体が失敗しても無視する）
+  try{
+    await sb.from('gacha_error_logs').insert({
+      participant_id: state.participant ? state.participant.id : null,
+      nickname: state.participant ? state.participant.nickname : null,
+      stage: stage,
+      error_message: err ? String(err.message || err) : '不明なエラー',
+      error_code: err ? (err.code || '') : '',
+      error_details: err ? (err.details || '') : '',
+      error_hint: err ? (err.hint || '') : '',
+    });
+  }catch(e){ console.error('[gacha] エラーログの記録自体に失敗', e); }
 }
 
 /* ---- 景品応募（prize_entries テーブルのみ使用） ---- */
@@ -1317,7 +1347,7 @@ async function screenGacha(cfg){
             gachaArea.innerHTML = resultHtml(res.creature, res.alreadyDrawn?'すでに引いた結果を表示しています':'おめでとうございます！');
             gachaArea.querySelector('#toCollection').onclick = ()=> go('rareCollection');
           }catch(e){
-            console.error('draw failed', e);
+            console.error('[gacha] 最終的に保存できませんでした', {stage, participantId: state.participant && state.participant.id, message:e && e.message, code:e && e.code, details:e && e.details, hint:e && e.hint, raw:e});
             gachaArea.innerHTML = `<div class="err-msg">保存に失敗しました。もう一度お試しください。</div><button class="btn btn-primary" id="retryDraw">もう一度試す</button>`;
             gachaArea.querySelector('#retryDraw').onclick = ()=> go('gacha', {gachaStage:stage});
           }
@@ -1531,8 +1561,8 @@ function screenAdminLogin(cfg){
 async function screenAdminHome(cfg, stores){
   if(!state.admin){ go('adminLogin'); return el('<div></div>'); }
   const wrap = el('<div class="screen"></div>');
-  const tabs = ['stores','participants','achievers','settings'];
-  const tabLabel = {stores:'店舗管理', participants:'参加者', achievers:'達成者', settings:'設定'};
+  const tabs = ['stores','participants','achievers','errorlogs','settings'];
+  const tabLabel = {stores:'店舗管理', participants:'参加者', achievers:'達成者', errorlogs:'エラーログ', settings:'設定'};
   wrap.innerHTML = `
   <div class="topbar"><div class="logo">Malia 管理画面</div><button class="link-btn" id="logout">ログアウト</button></div>
   <div class="tabbar">${tabs.map(t=>`<button data-t="${t}" class="${state.adminTab===t?'active':''}">${tabLabel[t]}</button>`).join('')}</div>
@@ -1545,6 +1575,7 @@ async function screenAdminHome(cfg, stores){
   if(state.adminTab==='stores') body.appendChild(await adminStores(cfg, stores));
   if(state.adminTab==='participants') body.appendChild(await adminParticipants(cfg, stores));
   if(state.adminTab==='achievers') body.appendChild(await adminAchievers(cfg));
+  if(state.adminTab==='errorlogs') body.appendChild(await adminErrorLogs(cfg));
   if(state.adminTab==='settings') body.appendChild(adminSettings(cfg));
   return wrap;
 }
@@ -1726,6 +1757,36 @@ async function adminAchievers(cfg){
     const filtered = q? list.filter(a=>a.number.toLowerCase().includes(q)) : list;
     wrap.querySelector('#results').innerHTML = renderList(filtered);
   };
+  return wrap;
+}
+
+async function adminErrorLogs(cfg){
+  const wrap = el('<div class="card"></div>');
+  const { data, error } = await sb.from('gacha_error_logs').select('*').order('created_at', {ascending:false}).limit(100);
+  const list = (error || !data) ? [] : data;
+  if(error){ console.error('adminErrorLogs failed', error); }
+  const rows = list.map(l=>{
+    const dt = new Date(l.created_at);
+    const dtStr = dt.getFullYear()+'/'+(dt.getMonth()+1)+'/'+dt.getDate()+' '+String(dt.getHours()).padStart(2,'0')+':'+String(dt.getMinutes()).padStart(2,'0');
+    return `<tr>
+      <td>${dtStr}</td>
+      <td>${l.nickname||'(不明)'}</td>
+      <td>${l.stage||''}</td>
+      <td style="max-width:220px;word-break:break-all;">${l.error_message||''}</td>
+      <td>${l.error_code||''}</td>
+    </tr>`;
+  }).join('');
+  wrap.innerHTML = `
+  <h2 class="section-title">🛠️ ガチャ保存エラーログ（${list.length}件）</h2>
+  <div class="small-note" style="margin-bottom:10px;">ガチャの保存が3回再試行しても失敗した場合に、自動で記録されます。参加者の画面には表示されません。新しい順に最大100件表示しています。</div>
+  ${list.length===0 ? `<div class="small-note">記録されているエラーはありません。</div>` : `
+  <div style="overflow-x:auto;">
+  <table class="admin-table">
+    <thead><tr><th>日時</th><th>ニックネーム</th><th>回数</th><th>エラー内容</th><th>コード</th></tr></thead>
+    <tbody>${rows}</tbody>
+  </table>
+  </div>`}
+  `;
   return wrap;
 }
 
