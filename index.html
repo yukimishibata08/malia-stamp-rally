@@ -54,6 +54,8 @@ body{
 .hero-title{font-size:26px;font-weight:900;line-height:1.4;position:relative;z-index:2;text-shadow:0 2px 8px rgba(0,0,0,0.08);}
 .hero-badge{display:inline-block;background:rgba(255,255,255,0.6);color:var(--ink);font-size:12px;padding:4px 12px;border-radius:20px;margin-bottom:12px;font-weight:700;letter-spacing:.5px;position:relative;z-index:2;}
 .hero-desc{font-size:13.5px;margin-top:10px;opacity:.95;position:relative;z-index:2;}
+.poster-img-wrap{ width:100%; line-height:0; }
+.poster-img-wrap img{ width:100%; height:auto; display:block; }
 
 .card{
   background:var(--white);
@@ -628,14 +630,8 @@ async function renderScreen(){
 function screenTop(cfg){
   const wrap = el('<div></div>');
   wrap.innerHTML = `
-  <div class="topbar"><div class="logo">Malia</div><div class="sub">おでかけスタンプラリー</div></div>
-  <div class="hero">
-    <div class="hero-sun"></div>
-    <div class="hero-palm">🌴</div>
-    <div class="hero-badge">☀️ 湘南サマー・スタンプラリー 2026</div>
-    <div class="hero-title">${cfg.campaignName}</div>
-    <div class="hero-desc">お店をめぐって、みんなでスタンプを集めよう！スマホだけでかんたん参加、アプリのダウンロードは不要です。</div>
-    <svg class="hero-wave" viewBox="0 0 400 40" preserveAspectRatio="none"><path d="M0 20 Q50 0 100 20 T200 20 T300 20 T400 20 V40 H0 Z" fill="#FDFBF6"/></svg>
+  <div class="poster-img-wrap">
+    <img src="poster-hero.jpg" alt="Malia おでかけスタンプラリー" style="width:100%;height:auto;display:block;">
   </div>
   <div class="screen">
     <div class="card">
