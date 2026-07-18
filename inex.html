@@ -1,0 +1,1846 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Malia おでかけスタンプラリー</title>
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="favicon-16.png">
+<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+<meta name="theme-color" content="#FFDD1F">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700;900&family=Noto+Sans+JP:wght@400;500;700&family=Noto+Serif+JP:wght@700;900&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<style>
+:root{
+  --pink: #FF9868;
+  --pink-deep: #FF7A45;
+  --blue: #4FD5E3;
+  --blue-deep: #17AFC2;
+  --beige: #FFEFC4;
+  --cream: #FCFEFE;
+  --ink: #26363A;
+  --ink-soft: #6C7E80;
+  --gold: #FFC33D;
+  --white: #FFFFFF;
+  --shadow: 0 8px 24px rgba(38,54,58,0.10);
+  --radius: 20px;
+}
+*{box-sizing:border-box;}
+body{
+  margin:0;
+  font-family:'Zen Kaku Gothic New','Noto Sans JP',sans-serif;
+  background:linear-gradient(180deg,#FDFEFE 0%,#EAFBFB 45%,#E4F6E9 100%);
+  color:var(--ink);
+  min-height:100vh;
+}
+#app{max-width:480px;margin:0 auto;min-height:100vh;position:relative;padding-bottom:40px;}
+.screen{padding:20px 20px 10px;animation:fadeIn .35s ease;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:14px 20px;}
+.topbar .logo{font-weight:900;font-size:20px;letter-spacing:.5px;color:var(--pink-deep);}
+.topbar .sub{font-size:11px;color:var(--ink-soft);}
+
+.hero{
+  border-radius:0 0 0 0;
+  background:linear-gradient(150deg,#FFD9A0 0%, var(--pink) 45%, var(--blue) 100%);
+  padding:36px 24px 44px;
+  position:relative;
+  overflow:hidden;
+  color:#fff;
+}
+.hero-wave{position:absolute;left:0;right:0;bottom:-1px;width:100%;height:32px;display:block;}
+.hero-sun{position:absolute;top:-30px;right:-24px;width:130px;height:130px;border-radius:50%;background:radial-gradient(circle,#FFF3C9 0%,rgba(255,243,201,.4) 60%,rgba(255,243,201,0) 75%);}
+.hero-palm{position:absolute;left:-6px;bottom:20px;font-size:52px;opacity:.55;transform:scaleX(-1);filter:drop-shadow(0 4px 6px rgba(0,0,0,.08));}
+.hero-title{font-size:26px;font-weight:900;line-height:1.4;position:relative;z-index:2;text-shadow:0 2px 8px rgba(0,0,0,0.08);}
+.hero-badge{display:inline-block;background:rgba(255,255,255,0.6);color:var(--ink);font-size:12px;padding:4px 12px;border-radius:20px;margin-bottom:12px;font-weight:700;letter-spacing:.5px;position:relative;z-index:2;}
+.hero-desc{font-size:13.5px;margin-top:10px;opacity:.95;position:relative;z-index:2;}
+.poster-img-wrap{ width:100%; line-height:0; }
+.poster-img-wrap img{ width:100%; height:auto; display:block; }
+
+.card{
+  background:var(--white);
+  border-radius:var(--radius);
+  box-shadow:var(--shadow);
+  padding:20px;
+  margin:16px 0;
+}
+h2.section-title{font-size:16px;font-weight:700;margin:0 0 14px;color:var(--ink);display:flex;align-items:center;gap:6px;}
+
+.btn{
+  display:block;width:100%;text-align:center;
+  padding:16px;border:none;border-radius:16px;
+  font-size:16px;font-weight:700;cursor:pointer;
+  transition:transform .12s ease, box-shadow .12s ease;
+  font-family:inherit;
+}
+.btn:active{transform:scale(.97);}
+.btn-primary{background:linear-gradient(135deg,var(--pink-deep),var(--pink));color:#fff;box-shadow:0 6px 16px rgba(255,122,69,0.35);}
+.btn-secondary{background:var(--white);color:var(--pink-deep);border:2px solid var(--pink);}
+.btn-ghost{background:transparent;color:var(--ink-soft);font-weight:500;font-size:13px;padding:10px;}
+.btn-outline-blue{background:#fff;color:var(--blue-deep);border:2px solid var(--blue);}
+
+input[type=text],input[type=password],input[type=email],input[type=date],input[type=number],textarea,select{
+  width:100%;padding:14px;border-radius:12px;border:2px solid #EFE2DC;
+  font-size:15px;font-family:inherit;margin-bottom:12px;background:#fff;color:var(--ink);
+}
+input:focus,textarea:focus,select:focus{outline:none;border-color:var(--pink);}
+label{font-size:12.5px;color:var(--ink-soft);font-weight:700;display:block;margin-bottom:6px;}
+
+.stamp-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;}
+.stamp-slot{
+  aspect-ratio:1;border-radius:16px;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;font-size:12px;font-weight:700;
+  border:2px dashed #DCE9E9; color:#B8C4C4; background:#FBFEFE;position:relative;
+}
+.stamp-slot.filled{
+  border:2px solid #FFE3D2;
+  background:#FFFAF3;
+  color:var(--pink-deep);
+  box-shadow:0 4px 14px rgba(255,122,69,.25);
+}
+.stamp-slot .icon{display:block;margin-bottom:4px;color:inherit;}
+.stamp-slot .icon svg{display:block;margin:0 auto;}
+.icon-wrap.notgot svg{filter:grayscale(1) opacity(.4);}
+.icon-wrap.got svg{filter:drop-shadow(0 3px 6px rgba(38,54,58,.18));}
+
+.rare-icon svg{display:block;margin:0 auto;}
+.rare-gold svg{filter:sepia(1) saturate(5) hue-rotate(-8deg) brightness(1.15) drop-shadow(0 0 6px rgba(255,195,61,.6));}
+.rare-aurora svg{filter:drop-shadow(0 0 9px rgba(159,198,222,.75));}
+.rare-jewel svg{filter:drop-shadow(0 0 9px rgba(255,179,214,.75));}
+.rare-rainbow svg{animation:rareRainbow 3s linear infinite; filter:saturate(2.5) drop-shadow(0 0 6px rgba(255,255,255,.6));}
+@keyframes rareRainbow{0%{filter:hue-rotate(0deg) saturate(2.5);}100%{filter:hue-rotate(360deg) saturate(2.5);}}
+.rare-starry svg{filter:drop-shadow(0 0 9px rgba(195,174,224,.75));}
+.rare-legendary svg{filter:saturate(1.8) drop-shadow(0 0 8px rgba(191,160,224,.7));}
+.rare-locked svg{filter:grayscale(1) opacity(.4);}
+
+/* ガチャ機風ボタン */
+.btn-gacha{
+  display:flex; align-items:center; justify-content:center; gap:10px;
+  width:100%; padding:16px; border:none; border-radius:20px; cursor:pointer;
+  background:linear-gradient(135deg,#FFD873,var(--pink)); color:#fff; font-weight:900; font-size:15.5px;
+  box-shadow:0 8px 18px rgba(255,152,104,.4); font-family:inherit;
+  transition:transform .12s ease;
+}
+.btn-gacha:active{transform:scale(.96);}
+.btn-gacha .gacha-machine{font-size:26px; position:relative; display:inline-block; filter:drop-shadow(0 2px 3px rgba(0,0,0,.15));}
+.btn-gacha .gacha-handle{position:absolute; top:-10px; right:-14px; font-size:15px; display:inline-block; transform-origin:70% 90%;}
+.btn-gacha:hover .gacha-handle{animation:gachaHandleWiggle .5s ease;}
+@keyframes gachaHandleWiggle{0%{transform:rotate(0deg);}30%{transform:rotate(-25deg);}70%{transform:rotate(15deg);}100%{transform:rotate(0deg);}}
+.btn-gacha.spinning .gacha-machine{animation:gachaSpin .6s linear infinite;}
+@keyframes gachaSpin{0%{transform:rotate(0deg);}100%{transform:rotate(360deg);}}
+
+/* ガチャマシンのイラストと演出(ガチャ画面本体) */
+.gm-scene{ position:relative; display:flex; flex-direction:column; align-items:center; padding:10px 0 4px; min-height:230px; justify-content:center; }
+.gm-machine{ width:170px; height:auto; }
+.gm-machine.shake{ animation: gmShake .6s ease; }
+@keyframes gmShake{ 0%,100%{transform:translateX(0);} 20%{transform:translateX(-4px) rotate(-1deg);} 40%{transform:translateX(4px) rotate(1deg);} 60%{transform:translateX(-3px) rotate(-1deg);} 80%{transform:translateX(3px) rotate(1deg);} }
+.gm-handle{ transform-origin:158px 176px; }
+.gm-machine.handle-spin .gm-handle{ animation: gmHandleSpin .6s ease; }
+@keyframes gmHandleSpin{ from{transform:rotate(0deg);} to{transform:rotate(360deg);} }
+.gm-capsule-out{ position:relative; width:36px; height:36px; margin-top:-6px; display:none; }
+.gm-capsule-out.drop{ display:block; animation: gmDrop .5s ease forwards; }
+@keyframes gmDrop{ 0%{opacity:0; transform:translateY(-10px) scale(.6);} 60%{opacity:1; transform:translateY(6px) scale(1.05);} 100%{opacity:1; transform:translateY(0) scale(1);} }
+.gm-capsule-half{ position:absolute; left:0; width:36px; height:18px; }
+.gm-capsule-half.top{ top:0; border-radius:18px 18px 0 0; background:#FF9868; }
+.gm-capsule-half.bottom{ bottom:0; border-radius:0 0 18px 18px; background:#FFD873; }
+.gm-capsule-out.open .gm-capsule-half.top{ animation: gmOpenTop .4s ease forwards; }
+.gm-capsule-out.open .gm-capsule-half.bottom{ animation: gmOpenBottom .4s ease forwards; }
+@keyframes gmOpenTop{ to{ transform:translateY(-24px) rotate(-25deg); opacity:0; } }
+@keyframes gmOpenBottom{ to{ transform:translateY(24px) rotate(25deg); opacity:0; } }
+.btn-gacha2{
+  display:block; width:100%; padding:16px; border:none; border-radius:16px; cursor:pointer;
+  background:linear-gradient(135deg,var(--pink-deep),var(--pink)); color:#fff; font-weight:900; font-size:15.5px;
+  box-shadow:0 8px 18px rgba(255,122,69,.35); font-family:inherit; transition:transform .12s ease;
+}
+.btn-gacha2:active{ transform:scale(.96); }
+
+/* ===== 景品応募ポップアップ ===== */
+.prize-modal-backdrop{
+  position:fixed; inset:0; background:rgba(38,54,58,.55); z-index:1000;
+  display:flex; align-items:center; justify-content:center; padding:20px;
+  animation:prizeBackdropIn .25s ease;
+}
+@keyframes prizeBackdropIn{ from{opacity:0;} to{opacity:1;} }
+.prize-modal{
+  background:#FFFDF6; border-radius:22px; padding:26px 20px 22px; max-width:340px; width:100%;
+  position:relative; text-align:center; box-shadow:0 20px 50px rgba(0,0,0,.25);
+  animation:prizeModalIn .45s cubic-bezier(.34,1.56,.64,1);
+}
+@keyframes prizeModalIn{
+  0%{ opacity:0; transform:scale(.7) translateY(20px); }
+  60%{ opacity:1; transform:scale(1.04) translateY(-4px); }
+  100%{ opacity:1; transform:scale(1) translateY(0); }
+}
+.prize-modal .sparkle{ z-index:2; }
+.prize-modal-icon{ margin:6px 0 10px; font-size:56px; line-height:1; animation:prizePop .6s cubic-bezier(.34,1.56,.64,1) .15s both; }
+.gacha-unlock-title{
+  font-size:19px; font-weight:900; color:var(--pink-deep); line-height:1.4; margin:16px 0 4px;
+  animation:prizePop .65s cubic-bezier(.34,1.56,.64,1) .1s both;
+}
+@keyframes prizePop{ from{ opacity:0; transform:scale(.5); } to{ opacity:1; transform:scale(1); } }
+.prize-modal-title{ font-size:17px; font-weight:900; color:var(--ink); margin-bottom:6px; }
+.prize-modal-name{ font-size:14px; font-weight:700; color:var(--pink-deep); margin-bottom:2px; }
+.prize-modal-sub{ font-size:11.5px; color:var(--ink-soft); margin-bottom:12px; }
+.prize-modal-note{ font-size:12.5px; color:var(--ink); background:#FFF3D0; border-radius:10px; padding:10px 12px; line-height:1.7; margin-bottom:8px; }
+.prize-modal-safe{ font-size:11px; color:var(--ink-soft); margin-bottom:14px; line-height:1.6; }
+.prize-modal-close{ position:absolute; top:10px; right:14px; background:none; border:none; font-size:18px; color:var(--ink-soft); cursor:pointer; }
+
+/* ===== 図鑑画面の常設応募欄 ===== */
+.prize-entry-card{ text-align:center; }
+.prize-entry-row{ display:flex; align-items:center; gap:12px; padding:12px 4px; border-top:1px solid #F1E7DF; text-align:left; }
+.prize-entry-row:first-of-type{ border-top:none; }
+.prize-entry-row .prize-icon-wrap{ flex-shrink:0; }
+.prize-entry-row .prize-text{ flex:1; }
+.prize-entry-row .prize-label{ font-size:11px; color:var(--ink-soft); font-weight:700; }
+.prize-entry-row .prize-name{ font-size:13px; font-weight:700; color:var(--ink); margin:1px 0; }
+.prize-entry-row .prize-sub{ font-size:10.5px; color:var(--ink-soft); }
+.prize-entered-badge{ display:inline-block; background:#E4F5EC; color:#3A9463; font-size:11.5px; font-weight:700; padding:4px 10px; border-radius:20px; }
+.prize-line-again{ display:block; font-size:11px; color:var(--blue-deep); margin-top:4px; background:none; border:none; cursor:pointer; padding:0; text-decoration:underline; }
+.prize-confirm-box{ margin-top:8px; background:#FFF6E8; border-radius:10px; padding:8px 10px; font-size:11.5px; color:var(--ink-soft); }
+.prize-confirm-box button{ margin-top:6px; }
+
+/* 賞状風 認定証（背景画像＋重ね文字） */
+.cert4-wrap{ padding:6px 0 4px; }
+.cert4-frame{ position:relative; width:100%; aspect-ratio:1536/1024; background:#FFFDF6; cursor:zoom-in; transition:transform .25s ease, box-shadow .25s ease; overflow:hidden; }
+.cert4-bg{ width:100%; height:100%; object-fit:contain; display:block; }
+.cert4-overlay{ position:absolute; top:0; left:0; right:0; bottom:0; font-family:'Noto Serif JP',serif; color:#2b2420; visibility:hidden; }
+.cert4-loading{ position:absolute; top:0; left:0; right:0; bottom:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:10px; background:#FFFDF6; font-size:13px; color:#8a7a5a; font-family:'Zen Kaku Gothic New',sans-serif; }
+.cert4-spinner{ width:26px; height:26px; border:3px solid #E7DCC2; border-top-color:#C9A227; border-radius:50%; animation:certSpin .8s linear infinite; }
+@keyframes certSpin{ to{ transform:rotate(360deg); } }
+.cert4-title{ position:absolute; top:23%; left:0; right:0; text-align:center; font-weight:900; letter-spacing:2px; color:#3a2a1a; font-size:3.5em; }
+.cert4-name{ position:absolute; top:33%; left:0; right:0; text-align:center; font-weight:900; color:#2b2420; font-family:'Zen Kaku Gothic New',sans-serif; font-size:2.85em; }
+.cert4-name .honor{ font-size:.55em; margin-left:6px; color:#5b5044; }
+.cert4-body{ position:absolute; top:46%; left:12%; right:12%; text-align:center; color:#3a3226; font-size:2.6em; line-height:2.1; }
+.cert4-meta{ position:absolute; top:77%; left:12%; right:12%; text-align:center; color:#4a4030; font-family:'Zen Kaku Gothic New',sans-serif; white-space:nowrap; font-size:1.65em; }
+.cert4-meta .sep{ opacity:.5; margin:0 5px;}
+body.cert-zoomed{ overflow:hidden; }
+body.cert-zoomed::before{ content:''; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(20,15,10,.65); z-index:998; }
+body.cert-zoomed .cert4-frame{
+  position:fixed; top:50%; left:50%; transform:translate(-50%,-50%);
+  width:92vw; max-width:640px; z-index:999; box-shadow:0 12px 44px rgba(0,0,0,.45); cursor:zoom-out;
+}
+
+/* レア生きもの登場演出 */
+.gacha-reveal{position:relative; display:inline-block; padding-top:10px;}
+.gacha-glow{
+  position:absolute; top:0; left:50%; width:170px; height:170px; transform:translateX(-50%);
+  background:radial-gradient(circle, rgba(255,211,120,.6) 0%, rgba(255,211,120,0) 70%);
+  animation:glowPulse 1.8s ease-out 1;
+}
+.gacha-glow.aurora-ring{
+  width:210px; height:210px;
+  background:
+    radial-gradient(circle, rgba(255,214,235,.55) 0%, rgba(255,214,235,0) 55%),
+    conic-gradient(from 0deg, rgba(255,196,229,.45), rgba(191,224,255,.45), rgba(255,241,181,.45), rgba(214,196,255,.45), rgba(255,196,229,.45));
+  border-radius:50%;
+  animation: auroraSpin 2.6s linear infinite, glowPulse 2s ease-out 1;
+  filter: blur(6px);
+}
+@keyframes auroraSpin{ from{ transform:translateX(-50%) rotate(0deg); } to{ transform:translateX(-50%) rotate(360deg); } }
+.rare-pop svg{animation:rarePop 1.6s cubic-bezier(.34,1.56,.64,1) forwards;}
+@keyframes rarePop{
+  0%{opacity:0; transform:scale(.4) translateY(14px);}
+  55%{opacity:1; transform:scale(1.16) translateY(-6px);}
+  75%{transform:scale(.95) translateY(0);}
+  100%{opacity:1; transform:scale(1) translateY(0);}
+}
+.rare-name-pop{animation:fadeIn .6s ease .5s both;}
+.rare-name-shine{
+  background:linear-gradient(90deg, var(--ink) 0%, var(--ink) 40%, #FFF6C9 50%, var(--ink) 60%, var(--ink) 100%);
+  background-size:250% 100%;
+  -webkit-background-clip:text; background-clip:text; color:transparent;
+  animation:fadeIn .6s ease .5s both, nameShine 2.2s linear .8s infinite;
+}
+@keyframes nameShine{ from{ background-position:200% 0; } to{ background-position:-50% 0; } }
+
+.remain-banner{
+  text-align:center;padding:16px;border-radius:16px;font-weight:900;font-size:16px;
+  background:linear-gradient(135deg,#FFF3D0,#D6F7F5);color:var(--pink-deep);margin-top:16px;
+  border:2px solid var(--pink);
+}
+.remain-banner.final{
+  background:linear-gradient(135deg,#FFD873,#FF9868);
+  animation:pulse 1.4s infinite;font-size:17px;
+}
+@keyframes pulse{0%,100%{transform:scale(1);}50%{transform:scale(1.03);}}
+
+.store-row{display:flex;gap:12px;align-items:center;padding:12px;border-radius:14px;background:#fff;margin-bottom:10px;box-shadow:var(--shadow);cursor:pointer;}
+.store-row img{width:56px;height:56px;border-radius:12px;object-fit:cover;background:#eee;flex-shrink:0;}
+.store-row .name{font-weight:700;font-size:14.5px;}
+.store-row .status{font-size:11.5px;margin-top:2px;}
+.store-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:6px;}
+.store-card{
+  display:flex;flex-direction:column;background:#fff;border-radius:14px;padding:0;
+  box-shadow:var(--shadow);cursor:pointer;height:100%;overflow:hidden;
+}
+.store-card-photo{
+  width:100%;aspect-ratio:3/2;object-fit:cover;display:block;background:#F3ECE2;
+}
+.store-card-photo.placeholder{
+  display:flex;align-items:center;justify-content:center;
+  font-size:11px;color:var(--ink-soft);text-align:center;
+}
+.store-card-body{ display:flex;flex-direction:column;flex:1;padding:10px 12px 12px; }
+.store-card-name{font-weight:700;font-size:13.5px;line-height:1.35;word-break:break-word;margin-bottom:4px;}
+.store-card-addr{font-size:11px;color:var(--ink-soft);line-height:1.45;word-break:break-word;flex:1;margin-bottom:8px;}
+.store-card .status{font-size:11px;margin-bottom:8px;}
+.store-card-mapbtn{font-size:11.5px;padding:9px 6px;margin-top:auto;}
+.status.got{color:#4CAF7D;font-weight:700;}
+.status.not{color:var(--ink-soft);}
+
+.detail-photo{width:100%;height:190px;object-fit:cover;border-radius:16px;background:#eee;margin-bottom:14px;}
+.info-line{display:flex;gap:10px;font-size:13.5px;margin-bottom:10px;align-items:flex-start;}
+.info-line .ico{width:20px;text-align:center;}
+.coupon-box{background:var(--beige);border-radius:14px;padding:14px;margin-top:14px;font-size:13.5px;border:2px dashed var(--gold);}
+
+.get-anim{
+  text-align:center;padding:30px 10px;
+}
+.get-anim .stamp-pop{display:inline-block;color:var(--pink-deep);position:relative;z-index:2;}
+.get-anim .stamp-pop svg{filter:drop-shadow(0 6px 14px rgba(255,122,69,.35));}
+.discover-icon svg{animation:creatureReveal 1.1s ease forwards;}
+@keyframes creatureReveal{
+  0%{filter:grayscale(1) brightness(.55);opacity:.25;transform:scale(.65) rotate(-8deg);}
+  55%{filter:grayscale(.25) brightness(.95);opacity:.85;transform:scale(1.12) rotate(4deg);}
+  100%{filter:grayscale(0) brightness(1);opacity:1;transform:scale(1) rotate(0deg);}
+}
+.discover-glow{
+  position:absolute;top:10px;left:50%;width:160px;height:160px;transform:translateX(-50%);
+  background:radial-gradient(circle, rgba(255,211,120,.55) 0%, rgba(255,211,120,0) 70%);
+  animation:glowPulse 1.6s ease-out 1;z-index:1;
+}
+@keyframes glowPulse{0%{opacity:0;transform:translateX(-50%) scale(.6);}40%{opacity:1;}100%{opacity:0;transform:translateX(-50%) scale(1.3);}}
+.discover-badge{
+  position:absolute;top:14px;right:14px;z-index:3;
+  background:var(--pink-deep);color:#fff;font-weight:900;font-size:12px;padding:5px 12px;border-radius:20px;
+  transform:rotate(10deg) scale(0);animation:badgePop .4s ease .5s forwards;
+}
+@keyframes badgePop{0%{transform:rotate(10deg) scale(0);}70%{transform:rotate(10deg) scale(1.2);}100%{transform:rotate(10deg) scale(1);}}
+.sparkle{position:absolute;font-size:18px;animation:floatUp 1.6s ease-out forwards;opacity:0;z-index:2;}
+@keyframes floatUp{0%{opacity:0;transform:translateY(0) scale(.5);}30%{opacity:1;}100%{opacity:0;transform:translateY(-60px) scale(1.1);}}
+
+.complete-screen{
+  background:linear-gradient(180deg,#FFF9E5 0%, #FFDDB0 40%, #A9EBEF 100%);
+  min-height:100vh;padding:30px 22px;text-align:center;position:relative;overflow:hidden;
+}
+.complete-stamp{
+  display:inline-block;border:6px solid #fff;color:#fff;background:linear-gradient(135deg,var(--pink-deep),var(--gold));
+  padding:18px 28px;border-radius:50%;font-weight:900;font-size:20px;transform:rotate(-8deg);
+  box-shadow:0 10px 28px rgba(255,195,61,.4);margin:14px 0;
+}
+.confetti{position:absolute;top:-10px;font-size:16px;animation:fall linear forwards;}
+@keyframes fall{to{transform:translateY(720px) rotate(360deg);opacity:0;}}
+.achieve-card{background:rgba(255,255,255,0.85);border-radius:20px;padding:20px;margin-top:20px;box-shadow:var(--shadow);position:relative;z-index:3;}
+.achieve-no{font-size:13px;letter-spacing:1px;color:var(--ink-soft);font-weight:700;}
+.achieve-no b{color:var(--pink-deep);font-size:16px;}
+
+.tabbar{display:flex;background:#fff;border-radius:16px;padding:4px;margin-bottom:16px;box-shadow:var(--shadow);}
+.tabbar button{flex:1;border:none;background:transparent;padding:10px;border-radius:12px;font-weight:700;font-size:12.5px;color:var(--ink-soft);font-family:inherit;cursor:pointer;}
+.tabbar button.active{background:var(--pink);color:#fff;}
+
+table.admin-table{width:100%;border-collapse:collapse;font-size:12.5px;}
+table.admin-table th,table.admin-table td{padding:8px 6px;border-bottom:1px solid #F1E7DF;text-align:left;}
+table.admin-table th{color:var(--ink-soft);font-weight:700;}
+
+.qr-box{background:#fff;padding:14px;border-radius:14px;text-align:center;box-shadow:var(--shadow);}
+.small-note{font-size:11.5px;color:var(--ink-soft);margin-top:6px;}
+.pill{display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;}
+.pill.on{background:#E4F5EC;color:#3A9463;}
+.pill.off{background:#F5E4E4;color:#B65A5A;}
+.link-btn{background:none;border:none;color:var(--blue-deep);font-weight:700;font-size:13px;cursor:pointer;padding:0;}
+.err-msg{color:#C0555F;font-size:13px;margin:-4px 0 10px;}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+/* =============== Supabase 接続設定 =============== */
+/* ↓↓↓ この2つを、ご自身のSupabaseプロジェクトの値に書き換えてください ↓↓↓ */
+const SUPABASE_URL = 'https://qaugcybfnqgeftpihojy.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFhdWdjeWJmbnFnZWZ0cGlob2p5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM4MzI5MzEsImV4cCI6MjA5OTQwODkzMX0.zEDGFD87PAU3mfctp4ESOrfw55JKNr5_pwTyXJeMn9s';
+/* ↑↑↑ ここまで ↑↑↑ */
+const SUPABASE_CONFIGURED = SUPABASE_URL.indexOf('YOUR_SUPABASE_URL_HERE')===-1 && SUPABASE_ANON_KEY.indexOf('YOUR_SUPABASE_ANON_KEY_HERE')===-1;
+const sb = SUPABASE_CONFIGURED ? supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
+
+/* この端末を識別するための番号（ログイン不要で、閉じても続きから再開できる仕組み） */
+function getDeviceToken(){
+  let t = localStorage.getItem('malia_device_token');
+  if(!t){ t = 'dev_'+Math.random().toString(36).slice(2)+Date.now().toString(36); localStorage.setItem('malia_device_token', t); }
+  return t;
+}
+function getUrlParam(name){
+  return new URLSearchParams(location.search).get(name);
+}
+function setUrlParamPreserveOthers(name, value){
+  try{
+    const url = new URL(location.href);
+    url.searchParams.set(name, value);
+    history.replaceState(null, '', url.toString());
+  }catch(e){ console.error('URL更新に失敗', e); }
+}
+
+async function getConfigDB(){
+  try{
+    const { data, error } = await sb.from('config').select('*').eq('id',1).single();
+    if(error || !data) return DEFAULT_CONFIG;
+    return {
+      campaignName: data.campaign_name, requiredStamps: data.required_stamps,
+      startDate: data.start_date, endDate: data.end_date,
+      adminEmail: data.admin_email, adminPassword: data.admin_password,
+      lineUrl: data.line_url, instagramUrl: data.instagram_url, contactEmail: data.contact_email,
+      sendMethods:{line:data.send_line, instagram:data.send_instagram, email:data.send_email}
+    };
+  }catch(e){ console.error('getConfigDB failed', e); return DEFAULT_CONFIG; }
+}
+async function saveConfigDB(cfg){
+  await sb.from('config').update({
+    campaign_name: cfg.campaignName, required_stamps: cfg.requiredStamps,
+    start_date: cfg.startDate||null, end_date: cfg.endDate||null,
+    admin_email: cfg.adminEmail, admin_password: cfg.adminPassword,
+    line_url: cfg.lineUrl, instagram_url: cfg.instagramUrl, contact_email: cfg.contactEmail,
+    send_line: cfg.sendMethods.line, send_instagram: cfg.sendMethods.instagram, send_email: cfg.sendMethods.email
+  }).eq('id',1);
+}
+async function getStoresDB(){
+  try{
+    const { data, error } = await sb.from('stores').select('*').order('id');
+    if(error || !data || !data.length) return DEFAULT_STORES;
+    return data.map(s=>({id:s.id, name:s.name, icon:s.icon, code:s.code, photo:s.photo||'', address:s.address||'', hours:s.hours||'', homepage:s.homepage||'', instagram:s.instagram||'', coupon:s.coupon||'', mapUrl:s.map_url||''}));
+  }catch(e){ console.error('getStoresDB failed', e); return DEFAULT_STORES; }
+}
+async function saveStoreDB(s){
+  const { error } = await sb.from('stores').upsert({id:s.id, name:s.name, icon:s.icon, code:s.code, photo:s.photo, address:s.address, hours:s.hours, homepage:s.homepage, instagram:s.instagram, coupon:s.coupon, map_url:s.mapUrl||null});
+  if(error) throw error;
+}
+async function deleteStoreDB(id){ await sb.from('stores').delete().eq('id', id); }
+
+async function loadParticipantByDeviceToken(){
+  try{
+    const token = getDeviceToken();
+    const { data, error } = await sb.from('participants').select('*').eq('device_token', token).maybeSingle();
+    if(error || !data) return null;
+    const { data: stampRows } = await sb.from('participant_stamps').select('store_id').eq('participant_id', data.id);
+    return { id:data.id, nickname:data.nickname, device_token:data.device_token, restore_token:data.restore_token, stamps:(stampRows||[]).map(r=>r.store_id) };
+  }catch(e){ console.error('loadParticipant failed', e); return null; }
+}
+async function findParticipantByRestoreToken(token){
+  try{
+    const { data, error } = await sb.from('participants').select('*').eq('restore_token', token).maybeSingle();
+    if(error || !data) return null;
+    const { data: stampRows } = await sb.from('participant_stamps').select('store_id').eq('participant_id', data.id);
+    return { id:data.id, nickname:data.nickname, device_token:data.device_token, restore_token:data.restore_token, stamps:(stampRows||[]).map(r=>r.store_id) };
+  }catch(e){ console.error('findByRestoreToken failed', e); return null; }
+}
+/* 復元用URL(?r=...)の発行。失敗しても通常のスタンプラリー機能は止めない */
+async function ensureRestoreToken(participant){
+  if(!participant) return null;
+  if(participant.restore_token){ return participant.restore_token; }
+  try{
+    const { data, error } = await sb.rpc('issue_restore_token', { p_device_token: participant.device_token });
+    if(error || !data) return null;
+    participant.restore_token = data;
+    return data;
+  }catch(e){ console.error('restore_token発行失敗（通常機能には影響しません）', e); return null; }
+}
+async function createParticipantDB(nickname){
+  const token = getDeviceToken();
+  const { data, error } = await sb.from('participants').insert({device_token:token, nickname}).select().single();
+  if(error) throw error;
+  return { id:data.id, nickname:data.nickname, device_token:data.device_token, restore_token:data.restore_token, stamps:[] };
+}
+
+/* ---- レア生きものガチャ（rare_gacha_results テーブルのみ使用） ---- */
+async function getGachaResult(stage){
+  if(!state.participant) return null;
+  try{
+    const { data, error } = await sb.from('rare_gacha_results').select('creature').eq('participant_id', state.participant.id).eq('stage', stage).maybeSingle();
+    if(error){
+      console.error('[gacha] getGachaResult エラー', {stage, message:error.message, code:error.code, details:error.details, hint:error.hint});
+      return null;
+    }
+    if(!data) return null;
+    return data.creature;
+  }catch(e){ console.error('[gacha] getGachaResult 例外', e); return null; }
+}
+async function drawGachaDB(stage){
+  // すでにこの回の結果がある場合は、新しく引き直さずそれを返す（通信エラー後の再試行でも安全にする）
+  const existing = await getGachaResult(stage);
+  if(existing){ return { creature: existing, alreadyDrawn:true }; }
+
+  if(!state.participant || !state.participant.id){
+    console.error('[gacha] drawGachaDB: state.participant が未確定のまま呼び出されました', state.participant);
+    throw new Error('participant not ready');
+  }
+
+  let excluded = null;
+  if(stage===5){ excluded = await getGachaResult(3); }
+  const pool = excluded ? RARE_CREATURES.filter(c=>c!==excluded) : RARE_CREATURES;
+  const pick = pool[Math.floor(Math.random()*pool.length)];
+
+  const participantId = state.participant.id;
+  let lastErr = null;
+  for(let attempt=0; attempt<3; attempt++){
+    try{
+      const { error } = await sb.from('rare_gacha_results').insert({participant_id:participantId, stage, creature:pick});
+      if(error){
+        console.error('[gacha] insert エラー (attempt '+(attempt+1)+'/3)', {stage, participantId, message:error.message, code:error.code, details:error.details, hint:error.hint});
+        if(error.code==='23505'){
+          const already = await getGachaResult(stage);
+          return { creature: already, alreadyDrawn:true };
+        }
+        throw error;
+      }
+      return { creature: pick, alreadyDrawn:false };
+    }catch(e){
+      lastErr = e;
+      console.error('[gacha] insert 例外 (attempt '+(attempt+1)+'/3)', e);
+      if(attempt<2){ await new Promise(r=>setTimeout(r, 500*(attempt+1))); }
+    }
+  }
+  // 3回とも失敗した場合でも、実は書き込み自体は成功していて応答だけ届かなかった可能性があるため、最後にもう一度だけ確認する
+  const recheck = await getGachaResult(stage);
+  if(recheck){ return { creature: recheck, alreadyDrawn:true }; }
+  console.error('[gacha] 3回再試行しても保存できませんでした', {stage, participantId, lastError: lastErr});
+  logGachaError(stage, lastErr);
+  throw lastErr;
+}
+async function logGachaError(stage, err){
+  // 参加者の画面には一切表示せず、管理画面でだけ確認できるよう記録する（この記録自体が失敗しても無視する）
+  try{
+    await sb.from('gacha_error_logs').insert({
+      participant_id: state.participant ? state.participant.id : null,
+      nickname: state.participant ? state.participant.nickname : null,
+      stage: stage,
+      error_message: err ? String(err.message || err) : '不明なエラー',
+      error_code: err ? (err.code || '') : '',
+      error_details: err ? (err.details || '') : '',
+      error_hint: err ? (err.hint || '') : '',
+    });
+  }catch(e){ console.error('[gacha] エラーログの記録自体に失敗', e); }
+}
+
+/* ---- 景品応募（prize_entries テーブルのみ使用） ---- */
+const PRIZE_INFO = {
+  3: { label:'3個達成！抽選に応募できます', name:'サーティワン アイスクリーム 500円チケット', actionText:'サーティワン アイスクリーム 500円チケットに応募する', sub:'抽選で20名様' },
+  5: { label:'5個達成！プレゼントに応募できます', name:'Amazonギフトカード 5,000円分', actionText:'Amazonギフトカード5,000円分に応募する', sub:'' },
+};
+function prizeIconSVG(stage, size){
+  size = size || 70;
+  if(stage===3){
+    return `<svg viewBox="0 0 100 100" width="${size}" height="${size}">
+      <path d="M37 52 L50 92 L63 52 Z" fill="#EAC08C"/>
+      <path d="M37 52 L63 52 L60 58 L40 58 Z" fill="#D9A96B"/>
+      <circle cx="50" cy="44" r="17" fill="#FFC9DA"/>
+      <circle cx="36" cy="34" r="15" fill="#FFEAA8"/>
+      <circle cx="50" cy="24" r="13" fill="#BFE3EE"/>
+      <circle cx="50" cy="20" r="3.4" fill="#FF6B6B"/>
+    </svg>`;
+  }
+  return `<svg viewBox="0 0 100 100" width="${size}" height="${size}">
+    <rect x="14" y="30" width="72" height="46" rx="9" fill="#FFF6DE" stroke="#FFC33D" stroke-width="4"/>
+    <rect x="14" y="42" width="72" height="10" fill="#FFC33D" opacity=".55"/>
+    <circle cx="50" cy="60" r="11" fill="#FFC33D"/>
+    <path d="M50 53 L52 58 L57 58 L53 61 L55 66 L50 63 L45 66 L47 61 L43 58 L48 58 Z" fill="#fff"/>
+  </svg>`;
+}
+async function getPrizeEntry(stage){
+  if(!state.participant) return false;
+  try{
+    const { data, error } = await sb.from('prize_entries').select('id').eq('participant_id', state.participant.id).eq('prize_stage', stage).maybeSingle();
+    if(error || !data) return false;
+    return true;
+  }catch(e){ console.error('getPrizeEntry failed', e); return false; }
+}
+async function markPrizeEntered(stage){
+  try{
+    const { error } = await sb.from('prize_entries').insert({participant_id: state.participant.id, prize_stage: stage});
+    if(error && error.code!=='23505') throw error;
+    return true;
+  }catch(e){ console.error('markPrizeEntered failed', e); return false; }
+}
+async function hasSeenPrizePopup(stage){
+  if(!state.participant) return true; // 参加者不明時は誤って何度も出さないよう安全側に倒す
+  try{
+    const { data, error } = await sb.from('prize_popup_seen').select('prize_stage').eq('participant_id', state.participant.id).eq('prize_stage', stage).maybeSingle();
+    if(error) return true;
+    return !!data;
+  }catch(e){ console.error('hasSeenPrizePopup failed', e); return true; }
+}
+async function markPrizePopupSeen(stage){
+  try{
+    const { error } = await sb.from('prize_popup_seen').insert({participant_id: state.participant.id, prize_stage: stage});
+    if(error && error.code!=='23505') console.error('markPrizePopupSeen failed', error);
+  }catch(e){ console.error('markPrizePopupSeen failed', e); }
+}
+
+function prizeEntryRowHtml(stage, entered){
+  const info = PRIZE_INFO[stage];
+  if(entered){
+    return `<div class="prize-entry-row">
+      <div class="prize-icon-wrap">${prizeIconSVG(stage,54)}</div>
+      <div class="prize-text">
+        <div class="prize-label">${info.label}</div>
+        <div class="prize-name">${info.actionText}</div>
+        <span class="prize-entered-badge">✅ 応募済み</span><br>
+        <button class="prize-line-again" data-stage="${stage}">LINEをもう一度開く</button>
+      </div>
+    </div>`;
+  }
+  return `<div class="prize-entry-row">
+    <div class="prize-icon-wrap">${prizeIconSVG(stage,54)}</div>
+    <div class="prize-text">
+      <div class="prize-label">${info.label}</div>
+      <div class="prize-name">${info.actionText}</div>
+      ${info.sub? `<div class="prize-sub">${info.sub}</div>`:''}
+      <button class="btn btn-secondary prize-line-btn" data-stage="${stage}" style="margin-top:6px;padding:8px 10px;font-size:12px;width:auto;">LINEで応募する</button>
+      <div class="prize-confirm-box" data-stage="${stage}" style="display:none;">
+        LINEを開けましたか？送信が終わったら押してください
+        <button class="btn btn-primary prize-confirm-btn" data-stage="${stage}" style="font-size:12px;padding:8px 10px;">✅ スクリーンショットを送信しました</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+async function renderPrizeSection(cfg, p, gotCount){
+  const show3 = gotCount>=3;
+  const show5 = gotCount>=5;
+  if(!show3 && !show5) return '';
+  const entered3 = show3 ? await getPrizeEntry(3) : false;
+  const entered5 = show5 ? await getPrizeEntry(5) : false;
+  let rows = '';
+  if(show3) rows += prizeEntryRowHtml(3, entered3);
+  if(show5) rows += prizeEntryRowHtml(5, entered5);
+  return `<div class="card prize-entry-card">
+    <h2 class="section-title">🎁 景品に応募する</h2>
+    <div class="small-note" style="margin-bottom:8px;">${p.nickname}さん・現在 ${gotCount}/${cfg.requiredStamps} 個達成</div>
+    ${rows}
+  </div>`;
+}
+
+function wirePrizeSection(wrap, cfg){
+  wrap.querySelectorAll('.prize-line-btn').forEach(btn=>{
+    btn.onclick = ()=>{
+      window.open(cfg.lineUrl || 'https://line.me/', '_blank');
+      const stage = btn.dataset.stage;
+      const box = wrap.querySelector('.prize-confirm-box[data-stage="'+stage+'"]');
+      if(box) box.style.display = 'block';
+      btn.style.display = 'none';
+    };
+  });
+  wrap.querySelectorAll('.prize-confirm-btn').forEach(btn=>{
+    btn.onclick = async ()=>{
+      const stage = parseInt(btn.dataset.stage, 10);
+      btn.disabled = true; btn.textContent = '保存中…';
+      await markPrizeEntered(stage);
+      render();
+    };
+  });
+  wrap.querySelectorAll('.prize-line-again').forEach(btn=>{
+    btn.onclick = ()=>{ window.open(cfg.lineUrl || 'https://line.me/', '_blank'); };
+  });
+}
+
+function showPrizePopup(stage, cfg, onClose){
+  const info = PRIZE_INFO[stage];
+  const backdrop = document.createElement('div');
+  backdrop.className = 'prize-modal-backdrop';
+  backdrop.innerHTML = `
+    <div class="prize-modal">
+      ${['✨','⭐','🎊','✨','⭐'].map((sp,i)=>`<span class="sparkle" style="left:${8+i*20}%;top:${i%2===0?0:14}px;animation-delay:${i*0.1}s;">${sp}</span>`).join('')}
+      <button class="prize-modal-close" id="prizeModalCloseX">✕</button>
+      <div class="prize-modal-title">${info.label}</div>
+      <div class="prize-modal-icon">${prizeIconSVG(stage, 80)}</div>
+      <div class="prize-modal-name">${info.actionText}</div>
+      ${info.sub? `<div class="prize-modal-sub">${info.sub}</div>`:''}
+      ${stage===5? `<div class="prize-modal-note" style="background:#FFE9EF;color:var(--pink-deep);font-weight:700;">あと1つでコンプリート！<br>すべてのいきものを集めると、特別な認定証がもらえるよ✨</div>`:''}
+      <div class="prize-modal-note">📸 図鑑画面をスクリーンショットして、LINEから送ってね</div>
+      <div class="prize-modal-safe">この画面を閉じても、図鑑画面の応募欄からいつでも応募できます</div>
+      <button class="btn btn-primary" id="prizeModalGoCard" style="margin-bottom:8px;">図鑑のスクリーンショットを撮る</button>
+      <button class="btn btn-ghost" id="prizeModalLater">あとで</button>
+    </div>
+  `;
+  document.body.appendChild(backdrop);
+  function closePopup(){ backdrop.remove(); if(onClose) onClose(); }
+  backdrop.querySelector('#prizeModalCloseX').onclick = closePopup;
+  backdrop.querySelector('#prizeModalLater').onclick = closePopup;
+  backdrop.querySelector('#prizeModalGoCard').onclick = ()=>{ closePopup(); go('card'); };
+}
+
+/* レア生きものガチャの解放案内（応募案内ポップアップと同じ世界観の中央表示） */
+function showGachaUnlockPopup(gachaStage, cfg){
+  const nth = gachaStage===3 ? '1' : '2';
+  const backdrop = document.createElement('div');
+  backdrop.className = 'prize-modal-backdrop';
+  backdrop.innerHTML = `
+    <div class="prize-modal">
+      ${['✨','⭐','🎊','✨','🌟','⭐','✨'].map((sp,i)=>`<span class="sparkle" style="left:${4+i*14}%;top:${i%2===0?0:16}px;animation-delay:${i*0.09}s;">${sp}</span>`).join('')}
+      <button class="prize-modal-close" id="gachaUnlockCloseX">✕</button>
+      <div class="gacha-unlock-title">✨ レア生きものガチャが<br>解放されました！</div>
+      <div class="prize-modal-sub" style="margin-bottom:14px;">${nth}回目のチャンスです</div>
+      <button class="btn btn-primary" id="gachaUnlockGo" style="margin-bottom:8px;">ガチャを回す</button>
+      <button class="btn btn-ghost" id="gachaUnlockLater">あとで</button>
+    </div>
+  `;
+  document.body.appendChild(backdrop);
+  function closePopup(){ backdrop.remove(); }
+  backdrop.querySelector('#gachaUnlockCloseX').onclick = closePopup;
+  backdrop.querySelector('#gachaUnlockLater').onclick = closePopup;
+  backdrop.querySelector('#gachaUnlockGo').onclick = ()=>{ closePopup(); go('gacha', {gachaStage}); };
+}
+
+/* 湘南の夏 生きもの図鑑：5種類の生き物イラストと紹介文 */
+const ICON_KEYS = ['turtle','dolphin','crab','starfish','hermit','jellyfish'];
+const ICON_LABELS = {turtle:'🐢 ウミガメ', dolphin:'🐬 イルカ', crab:'🦀 カニ', starfish:'⭐ ヒトデ', hermit:'🐚 ヤドカリ', jellyfish:'🎐 クラゲ'};
+const CREATURE_INFO = {
+  turtle:   {name:'ウミガメ', intro:'ゆったり海を泳ぐ、やさしい人気者'},
+  dolphin:  {name:'イルカ',   intro:'ジャンプが得意な、海の元気者'},
+  crab:     {name:'カニ',     intro:'砂浜を横歩きする、小さな冒険家'},
+  starfish: {name:'ヒトデ',   intro:'星の形をした、海の不思議な生き物'},
+  hermit:   {name:'ヤドカリ', intro:'お気に入りの貝がらを背負ってお引っ越し'},
+  jellyfish:{name:'クラゲ',   intro:'ふわふわ漂う、海の中の小さなランプ'},
+};
+
+function iconSVG(key, size){
+  size = size || 40;
+  const icons = {
+    turtle: `
+      <ellipse cx="50" cy="58" rx="27" ry="21" fill="#A9DED4"/>
+      <circle cx="50" cy="58" r="10" fill="#F3DFB8" opacity=".65"/>
+      <circle cx="50" cy="31" r="11" fill="#A9DED4"/>
+      <ellipse cx="19" cy="46" rx="10" ry="6" fill="#A9DED4" transform="rotate(-24 19 46)"/>
+      <ellipse cx="81" cy="46" rx="10" ry="6" fill="#A9DED4" transform="rotate(24 81 46)"/>
+      <ellipse cx="27" cy="79" rx="9" ry="5" fill="#A9DED4" transform="rotate(24 27 79)"/>
+      <ellipse cx="73" cy="79" rx="9" ry="5" fill="#A9DED4" transform="rotate(-24 73 79)"/>
+      <circle cx="46" cy="29" r="2.2" fill="#3A4245"/>
+      <circle cx="54" cy="29" r="2.2" fill="#3A4245"/>`,
+    dolphin: `
+      <path d="M14 68 Q8 40 34 24 Q54 12 76 28 Q88 37 82 50 Q73 44 66 50 Q74 60 66 68 Q57 55 46 58 Q30 62 23 72 Q16 72 14 68 Z" fill="#BFE3EE"/>
+      <path d="M44 21 Q50 8 62 12 Q54 18 52 26 Z" fill="#BFE3EE"/>
+      <path d="M20 60 Q28 65 37 61" stroke="#8FCBDB" stroke-width="2.5" fill="none" opacity=".8"/>
+      <circle cx="32" cy="40" r="2.4" fill="#3A4245"/>`,
+    crab: `
+      <ellipse cx="50" cy="58" rx="23" ry="16" fill="#FFB199"/>
+      <circle cx="17" cy="45" r="10" fill="#FF9868"/>
+      <circle cx="83" cy="45" r="10" fill="#FF9868"/>
+      <path d="M30 54 L18 45" stroke="#FF9868" stroke-width="6" stroke-linecap="round"/>
+      <path d="M70 54 L82 45" stroke="#FF9868" stroke-width="6" stroke-linecap="round"/>
+      <g stroke="#FF9868" stroke-width="4" stroke-linecap="round">
+        <line x1="30" y1="65" x2="17" y2="75"/>
+        <line x1="38" y1="72" x2="28" y2="85"/>
+        <line x1="70" y1="65" x2="83" y2="75"/>
+        <line x1="62" y1="72" x2="72" y2="85"/>
+      </g>
+      <circle cx="42" cy="52" r="3" fill="#3A2317"/>
+      <circle cx="58" cy="52" r="3" fill="#3A2317"/>`,
+    starfish: `
+      <path d="M50 10 L61 38 L88 42 L67 60 L74 87 L50 73 L26 87 L33 60 L12 42 L39 38 Z" fill="#FFB199"/>
+      <circle cx="50" cy="50" r="8" fill="#F3DFB8"/>
+      <circle cx="50" cy="26" r="2" fill="#F3DFB8"/>
+      <circle cx="74" cy="45" r="2" fill="#F3DFB8"/>
+      <circle cx="63" cy="72" r="2" fill="#F3DFB8"/>
+      <circle cx="37" cy="72" r="2" fill="#F3DFB8"/>
+      <circle cx="26" cy="45" r="2" fill="#F3DFB8"/>`,
+    hermit: `
+      <path d="M40 82 Q18 74 22 46 Q26 18 54 18 Q78 18 80 40 Q82 56 62 58 Q48 60 50 44 Q52 33 65 36" fill="none" stroke="#E0B978" stroke-width="11" stroke-linecap="round"/>
+      <ellipse cx="38" cy="82" rx="13" ry="9" fill="#FFB199"/>
+      <g stroke="#FFB199" stroke-width="4.5" stroke-linecap="round">
+        <line x1="28" y1="87" x2="17" y2="93"/>
+        <line x1="49" y1="87" x2="58" y2="93"/>
+      </g>
+      <circle cx="33" cy="79" r="2.2" fill="#3A2317"/>
+      <circle cx="43" cy="79" r="2.2" fill="#3A2317"/>`,
+    jellyfish: `
+      <path d="M22 45 Q22 18 50 18 Q78 18 78 45 Q78 56 50 52 Q22 56 22 45 Z" fill="#C9E9F0"/>
+      <circle cx="38" cy="32" r="3" fill="#FFB199" opacity=".7"/>
+      <circle cx="58" cy="30" r="3" fill="#FFB199" opacity=".7"/>
+      <circle cx="50" cy="40" r="3" fill="#FFB199" opacity=".7"/>
+      <circle cx="42" cy="38" r="2.4" fill="#3A4245"/>
+      <circle cx="58" cy="38" r="2.4" fill="#3A4245"/>
+      <path d="M32 52 Q30 65 34 78" stroke="#BFE3EE" stroke-width="4" fill="none" stroke-linecap="round"/>
+      <path d="M42 54 Q40 68 44 82" stroke="#BFE3EE" stroke-width="4" fill="none" stroke-linecap="round"/>
+      <path d="M50 55 Q50 70 50 85" stroke="#BFE3EE" stroke-width="4" fill="none" stroke-linecap="round"/>
+      <path d="M58 54 Q60 68 56 82" stroke="#BFE3EE" stroke-width="4" fill="none" stroke-linecap="round"/>
+      <path d="M68 52 Q70 65 66 78" stroke="#BFE3EE" stroke-width="4" fill="none" stroke-linecap="round"/>`,
+  };
+  const inner = icons[key] || icons.turtle;
+  return `<svg viewBox="0 0 100 100" width="${size}" height="${size}">${inner}</svg>`;
+}
+/* 発見前は生き物が分からないよう、謎解き感のある「？」プレースホルダーを表示 */
+function mysteryIconSVG(size){
+  size = size || 40;
+  return `<svg viewBox="0 0 100 100" width="${size}" height="${size}">
+    <circle cx="50" cy="50" r="40" fill="none" stroke="#C9D6D6" stroke-width="5" stroke-dasharray="9 8"/>
+    <text x="50" y="64" font-size="36" text-anchor="middle" fill="#C9D6D6" font-family="'Zen Kaku Gothic New',sans-serif" font-weight="700">?</text>
+  </svg>`;
+}
+
+/* ============ レア生きものガチャ（既存の6種類とは完全に別枠の追加機能） ============ */
+const RARE_CREATURES = ['金色のウミガメ','深海のリュウグウノツカイ','月あかりのクリオネ','虹色のウミウシ','幻のメンダコ','伝説のタツノオトシゴ'];
+const RARE_ICON_MAP = {
+  '金色のウミガメ':         {base:'turtle',     cls:'rare-gold'},
+  '深海のリュウグウノツカイ': {base:'oarfish',    cls:'rare-aurora'},
+  '月あかりのクリオネ':       {base:'clione',     cls:'rare-jewel'},
+  '虹色のウミウシ':           {base:'nudibranch', cls:'rare-rainbow'},
+  '幻のメンダコ':             {base:'dumbo',      cls:'rare-starry'},
+  '伝説のタツノオトシゴ':     {base:'seahorse',   cls:'rare-legendary'},
+};
+function seahorseSVG(size){
+  size = size || 40;
+  return `<svg viewBox="0 0 100 100" width="${size}" height="${size}">
+    <path d="M45 10 Q60 10 62 25 Q64 35 55 40 Q68 42 66 55 Q64 68 50 70 Q54 78 48 85 Q42 90 36 85 Q42 82 40 76 Q30 72 30 60 Q30 48 40 44 Q32 38 34 28 Q36 15 45 10 Z" fill="#BFA0E0"/>
+    <circle cx="50" cy="24" r="2.4" fill="#3A2317"/>
+    <path d="M58 30 Q64 32 62 38" stroke="#A985D6" stroke-width="3" fill="none" stroke-linecap="round"/>
+  </svg>`;
+}
+function clioneSVG(size){
+  size = size || 40;
+  return `<svg viewBox="0 0 100 100" width="${size}" height="${size}">
+    <ellipse cx="50" cy="58" rx="16" ry="24" fill="#EAF3FF" opacity=".9"/>
+    <ellipse cx="50" cy="58" rx="16" ry="24" fill="none" stroke="#BFD9F5" stroke-width="1.5"/>
+    <path d="M36 44 Q18 38 16 54 Q26 52 38 58 Z" fill="#FFD3E6" opacity=".9"/>
+    <path d="M64 44 Q82 38 84 54 Q74 52 62 58 Z" fill="#FFD3E6" opacity=".9"/>
+    <ellipse cx="44" cy="42" rx="3" ry="4" fill="#3A2317" opacity=".6"/>
+    <ellipse cx="56" cy="42" rx="3" ry="4" fill="#3A2317" opacity=".6"/>
+    <path d="M46 70 Q50 78 54 70" stroke="#BFD9F5" stroke-width="2" fill="none" stroke-linecap="round"/>
+  </svg>`;
+}
+function nudibranchSVG(size){
+  size = size || 40;
+  return `<svg viewBox="0 0 100 100" width="${size}" height="${size}">
+    <path d="M18 62 Q20 40 50 38 Q82 38 84 60 Q86 76 60 78 Q30 80 18 62 Z" fill="#FFD9EE"/>
+    <path d="M18 62 Q20 40 50 38 Q82 38 84 60 Q86 76 60 78 Q30 80 18 62 Z" fill="none" stroke="#F5A8D6" stroke-width="1.5"/>
+    <path d="M40 42 L37 30 M48 40 L47 27 M56 40 L58 27 M64 42 L68 30" stroke="#B98CE0" stroke-width="3" fill="none" stroke-linecap="round"/>
+    <path d="M30 50 L26 40 M36 56 L30 48" stroke="#8FC7EA" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+    <circle cx="30" cy="58" r="2" fill="#3A2317" opacity=".5"/>
+  </svg>`;
+}
+function dumboOctopusSVG(size){
+  size = size || 40;
+  return `<svg viewBox="0 0 100 100" width="${size}" height="${size}">
+    <ellipse cx="50" cy="48" rx="26" ry="22" fill="#D8C6F0"/>
+    <ellipse cx="24" cy="42" rx="14" ry="18" fill="#E4D6F5" transform="rotate(-18 24 42)"/>
+    <ellipse cx="76" cy="42" rx="14" ry="18" fill="#E4D6F5" transform="rotate(18 76 42)"/>
+    <circle cx="41" cy="46" r="4.5" fill="#3A2317"/>
+    <circle cx="59" cy="46" r="4.5" fill="#3A2317"/>
+    <circle cx="42.5" cy="44.5" r="1.4" fill="#fff"/>
+    <circle cx="60.5" cy="44.5" r="1.4" fill="#fff"/>
+    <path d="M34 66 Q36 78 32 86 M42 68 Q42 80 40 88 M50 69 Q50 81 50 89 M58 68 Q58 80 60 88 M66 66 Q64 78 68 86" stroke="#C3AEE0" stroke-width="4" fill="none" stroke-linecap="round"/>
+  </svg>`;
+}
+function oarfishSVG(size){
+  size = size || 40;
+  return `<svg viewBox="0 0 100 100" width="${size}" height="${size}">
+    <path d="M12 74 Q30 40 50 52 Q70 64 88 30" stroke="#CFE3F0" stroke-width="14" fill="none" stroke-linecap="round"/>
+    <path d="M12 74 Q30 40 50 52 Q70 64 88 30" stroke="#9FC6DE" stroke-width="14" fill="none" stroke-linecap="round" opacity=".35"/>
+    <path d="M16 66 Q20 54 16 44 M26 55 Q30 45 27 36 M36 51 Q40 42 38 33" stroke="#FF9BB3" stroke-width="3" fill="none" stroke-linecap="round"/>
+    <circle cx="86" cy="28" r="3" fill="#3A2317"/>
+  </svg>`;
+}
+function rareIconSVG(name, size){
+  const m = RARE_ICON_MAP[name];
+  if(!m) return mysteryIconSVG(size);
+  if(m.base==='seahorse') return seahorseSVG(size);
+  if(m.base==='clione') return clioneSVG(size);
+  if(m.base==='nudibranch') return nudibranchSVG(size);
+  if(m.base==='dumbo') return dumboOctopusSVG(size);
+  if(m.base==='oarfish') return oarfishSVG(size);
+  return iconSVG(m.base, size);
+}
+
+const DEFAULT_STORES = [
+  {id:'A', name:'店舗A', icon:'turtle', code:'1234', photo:'', address:'神奈川県藤沢市○○1-1-1', hours:'10:00〜18:00', homepage:'', instagram:'', coupon:'ご提示で駐車場1時間無料'},
+  {id:'B', name:'店舗B', icon:'dolphin', code:'2345', photo:'', address:'神奈川県茅ヶ崎市○○2-2-2', hours:'11:00〜19:00', homepage:'', instagram:'', coupon:'ドリンク1杯無料'},
+  {id:'C', name:'店舗C', icon:'crab', code:'3456', photo:'', address:'神奈川県鎌倉市○○3-3-3', hours:'9:00〜17:00', homepage:'', instagram:'', coupon:'お会計から5%OFF'},
+  {id:'D', name:'店舗D', icon:'starfish', code:'4567', photo:'', address:'神奈川県逗子市○○4-4-4', hours:'10:00〜20:00', homepage:'', instagram:'', coupon:'次回来店時にミニギフト'},
+  {id:'E', name:'店舗E', icon:'hermit', code:'5678', photo:'', address:'神奈川県平塚市○○5-5-5', hours:'10:00〜18:00', homepage:'', instagram:'', coupon:'お子様に駄菓子プレゼント'},
+];
+const DEFAULT_CONFIG = {
+  campaignName:'Malia おでかけスタンプラリー 〜湘南サマー〜',
+  requiredStamps:5,
+  startDate:'2026-07-01',
+  endDate:'2026-08-31',
+  adminEmail:'admin@malia-example.jp',
+  adminPassword:'malia2026',
+  lineUrl:'https://line.me/R/ti/p/@malia-official',
+  instagramUrl:'https://instagram.com/malia_official',
+  contactEmail:'info@malia-example.jp',
+  sendMethods:{line:true, instagram:true, email:false}
+};
+
+/* =============== アプリ状態 =============== */
+const state = {
+  screen:'loading',
+  participant:null,
+  currentStoreId:null,
+  codeError:'',
+  justGotStamp:null,
+  achievementInfo:null,
+  admin:false,
+  adminTab:'stores',
+  gachaStage:null,
+  editingStore:null,
+  toast:null,
+  storeListTarget:null,
+};
+
+function go(screen, extra){ Object.assign(state, {screen}, extra||{}); render(); window.scrollTo(0,0); }
+
+
+function remainingCount(p, required){ return Math.max(required - (p? p.stamps.length : 0), 0); }
+
+function remainMessage(gotCount, total){
+  const remain = total - gotCount;
+  const overview = `${total}種類のうち、${gotCount}種類を発見！`;
+  if(remain<=0) return null;
+  let tier;
+  if(remain===1) tier = '🌴 あと1種類でコンプリート！';
+  else if(remain===2) tier = '🏝️ あと2種類でコンプリート！';
+  else tier = 'あと'+remain+'種類でコンプリート！';
+  return {overview, tier, final: remain===1};
+}
+
+/* =============== 初期ロード =============== */
+async function boot(){
+  const rToken = getUrlParam('r');
+  if(rToken){
+    const byToken = await findParticipantByRestoreToken(rToken);
+    if(byToken){ state.participant = byToken; go('card'); return; }
+  }
+  const p = await loadParticipantByDeviceToken();
+  if(p){
+    state.participant = p;
+    const token = await ensureRestoreToken(p);
+    if(token){ setUrlParamPreserveOthers('r', token); }
+    go('card');
+    return;
+  }
+  go('top');
+}
+
+/* =============== レンダリング =============== */
+function el(html){ const d=document.createElement('div'); d.innerHTML=html; return d.firstElementChild; }
+
+async function render(){
+  const app = document.getElementById('app');
+  app.innerHTML = '<div style="text-align:center;padding:80px 20px;color:#B98;">読み込み中…</div>';
+  try{
+    const view = await renderScreen();
+    app.innerHTML = '';
+    app.appendChild(view);
+  }catch(e){
+    console.error('render failed:', e);
+    app.innerHTML = `
+      <div style="padding:60px 24px;text-align:center;">
+        <div style="font-size:36px;margin-bottom:12px;">📶</div>
+        <h2 style="margin-bottom:10px;">通信の状態が不安定なようです</h2>
+        <p style="font-size:13px;color:var(--ink-soft);line-height:1.7;margin-bottom:20px;">電波の良い場所で、もう一度お試しください。</p>
+        <button class="btn btn-primary" id="retryBtn" style="max-width:260px;margin:0 auto;">もう一度試す</button>
+      </div>`;
+    const rb = document.getElementById('retryBtn');
+    if(rb) rb.onclick = ()=> render();
+  }
+}
+
+async function renderScreen(){
+  const cfg = await getConfigDB();
+  const stores = await getStoresDB();
+
+  if(state.screen==='top') return screenTop(cfg);
+  if(state.screen==='join') return screenJoin(cfg);
+  if(state.screen==='card') return await screenCard(cfg, stores);
+  if(state.screen==='storeList') return await screenStoreList(cfg, stores);
+  if(state.screen==='storeDetail') return screenStoreDetail(cfg, stores);
+  if(state.screen==='codeInput') return screenCodeInput(cfg, stores);
+  if(state.screen==='gotStamp') return await screenGotStamp(cfg, stores);
+  if(state.screen==='complete') return await screenComplete(cfg);
+  if(state.screen==='rareCollection') return await screenRareCollection(cfg);
+  if(state.screen==='gacha') return await screenGacha(cfg);
+  if(state.screen==='certificate') return await screenCertificate(cfg);
+  if(state.screen==='adminLogin') return screenAdminLogin(cfg);
+  if(state.screen==='adminHome') return await screenAdminHome(cfg, stores);
+  return el('<div>画面がありません</div>');
+}
+
+/* ---------- トップ ---------- */
+function screenTop(cfg){
+  const wrap = el('<div></div>');
+  wrap.innerHTML = `
+  <div class="poster-img-wrap">
+    <img src="poster-hero.jpg" alt="Malia おでかけスタンプラリー" style="width:100%;height:auto;display:block;">
+  </div>
+  <div class="screen">
+    <div class="card">
+      <h2 class="section-title">🌴 遊び方</h2>
+      <div class="info-line"><span class="ico">1️⃣</span><span>ニックネームだけで参加登録</span></div>
+      <div class="info-line"><span class="ico">2️⃣</span><span>店舗のQRコードを読み取り、コードを入力して生き物を発見</span></div>
+      <div class="info-line"><span class="ico">3️⃣</span><span>${cfg.requiredStamps}種類の生き物を集めて、図鑑をコンプリート！</span></div>
+    </div>
+    <button class="btn btn-primary" id="startBtn">参加する（ニックネーム登録）</button>
+    <button class="btn btn-ghost" id="storeListBtn">参加せずに店舗一覧を見る</button>
+    <div style="text-align:center;margin-top:30px;"><button class="link-btn" id="adminLink">管理者の方はこちら</button></div>
+  </div>
+  `;
+  wrap.querySelector('#startBtn').onclick = ()=> go('join');
+  wrap.querySelector('#storeListBtn').onclick = ()=> go('storeList',{storeListTarget:'guest'});
+  wrap.querySelector('#adminLink').onclick = ()=> go('adminLogin');
+  return wrap;
+}
+
+/* ---------- 参加登録 ---------- */
+function screenJoin(cfg){
+  const wrap = el('<div class="screen"></div>');
+  wrap.innerHTML = `
+  <div class="card">
+    <h2 class="section-title">✏️ ニックネーム登録</h2>
+    <label>アプリ内で表示される名前です（本名でなくてOK）</label>
+    <input type="text" id="nick" placeholder="例）まりこ" maxlength="12">
+    <div class="err-msg" id="err" style="display:none;"></div>
+    <button class="btn btn-primary" id="go">スタンプラリーをはじめる</button>
+    <button class="btn btn-ghost" id="back">戻る</button>
+  </div>`;
+  wrap.querySelector('#back').onclick = ()=> go('top');
+  wrap.querySelector('#go').onclick = async ()=>{
+    const v = wrap.querySelector('#nick').value.trim();
+    const errEl = wrap.querySelector('#err');
+    if(!v){ errEl.textContent='ニックネームを入力してください'; errEl.style.display='block'; return; }
+    try{
+      state.participant = await createParticipantDB(v);
+    }catch(e){
+      console.error('join failed', e);
+      errEl.textContent='登録に失敗しました。もう一度お試しください。'; errEl.style.display='block'; return;
+    }
+    const token = await ensureRestoreToken(state.participant);
+    if(token){ setUrlParamPreserveOthers('r', token); }
+    if(state.pendingStoreId){
+      const id = state.pendingStoreId; state.pendingStoreId = null;
+      go('codeInput', {currentStoreId:id, codeError:''});
+    } else {
+      go('card');
+    }
+  };
+  return wrap;
+}
+
+/* ---------- 湘南の夏 生きもの図鑑 ---------- */
+async function screenCard(cfg, stores){
+  const p = state.participant || {nickname:'', stamps:[]};
+  const gotCount = p.stamps.length;
+  const msg = remainMessage(gotCount, cfg.requiredStamps);
+  const wrap = el('<div class="screen"></div>');
+  const gridHtml = stores.slice(0,cfg.requiredStamps).map(s=>{
+    const got = p.stamps.includes(s.id);
+    const label = got
+      ? `<div style="font-size:12px;font-weight:700;margin-top:3px;">${CREATURE_INFO[s.icon]? CREATURE_INFO[s.icon].name : s.name}</div>`
+      : `<div style="font-size:12px;font-weight:700;margin-top:3px;letter-spacing:1px;">？？？</div><div style="font-size:9.5px;color:#B7C4C4;">まだ見つかっていないよ</div>`;
+    return `<div class="stamp-slot ${got?'filled':''}"><span class="icon icon-wrap ${got?'got':'notgot'}">${got? iconSVG(s.icon, 60) : mysteryIconSVG(52)}</span>${label}</div>`;
+  }).join('');
+  wrap.innerHTML = `
+  <div class="topbar"><div class="logo">Malia</div><div class="sub">こんにちは、${p.nickname}さん</div></div>
+  <div class="card">
+    <h2 class="section-title">📖 湘南の夏 生きもの図鑑</h2>
+    <div class="stamp-grid">${gridHtml}</div>
+    ${msg ? `<div class="remain-banner ${msg.final?'final':''}"><div style="font-size:13px;font-weight:700;">${msg.overview}</div><div style="margin-top:4px;">${msg.tier}</div></div>` : ''}
+    ${gotCount>=cfg.requiredStamps ? `<button class="btn btn-primary" id="toComplete" style="margin-top:14px;">達成画面を見る 🎉</button>` : ''}
+  </div>
+  ${gotCount>=1 ? `
+  <div class="card" style="text-align:center;">
+    <div style="font-weight:700;">🎁 参加賞をゲット！</div>
+    <button class="btn btn-secondary" id="coloringBtn" style="margin-top:10px;">塗り絵PDFを見る</button>
+    <div class="small-note" style="margin-top:6px;">タップするとPDFの画面に切り替わります。そこに表示される保存・印刷・共有のアイコンから、A4サイズのまま保存・印刷できます。もどるときはブラウザの「戻る」を押してください</div>
+    <div id="coloringMsg" class="small-note" style="display:none;"></div>
+  </div>` : ''}
+  ${gotCount>=2 ? `<button class="btn btn-outline-blue" id="rareBtn">✨ レア生きものコレクション</button>` : ''}
+  ${await renderPrizeSection(cfg, p, gotCount)}
+  <div class="card" style="text-align:center;">
+    <div style="font-size:13.5px;font-weight:700;">📷 スマートフォンの標準カメラを開いて、<br>店頭のQRコードを読み取ってください</div>
+    <div class="small-note" style="margin-top:6px;">iPhone・Androidどちらも、普段お使いのカメラアプリでそのまま読み取れます</div>
+  </div>
+  <button class="btn btn-secondary" id="listBtn">🏝️ 店舗一覧を見る</button>
+  `;
+  wrap.querySelector('#listBtn').onclick = ()=> go('storeList',{storeListTarget:'participant'});
+  const cb = wrap.querySelector('#toComplete');
+  if(cb) cb.onclick = ()=> go('complete');
+  const rareBtn = wrap.querySelector('#rareBtn');
+  if(rareBtn) rareBtn.onclick = ()=> go('rareCollection');
+  wirePrizeSection(wrap, cfg);
+  const colBtn = wrap.querySelector('#coloringBtn');
+  if(colBtn) colBtn.onclick = async ()=>{
+    const msgEl = wrap.querySelector('#coloringMsg');
+    try{
+      const res = await fetch('coloring.pdf', {method:'HEAD'});
+      if(res.ok){ location.href = 'coloring.pdf'; }
+      else { msgEl.textContent='ぬりえは準備中です。しばらくお待ちください。'; msgEl.style.display='block'; }
+    }catch(e){ msgEl.textContent='ぬりえは準備中です。しばらくお待ちください。'; msgEl.style.display='block'; }
+  };
+  return wrap;
+}
+
+/* ---------- 店舗一覧 ---------- */
+async function screenStoreList(cfg, stores){
+  const p = state.participant;
+  const wrap = el('<div class="screen"></div>');
+  const cards = stores.map(s=>{
+    const got = p && p.stamps.includes(s.id);
+    const mapHref = s.mapUrl ? s.mapUrl : ('https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(s.address||s.name));
+    const photoHtml = s.photo
+      ? `<img class="store-card-photo" src="${s.photo}" alt="${s.name}">`
+      : `<div class="store-card-photo placeholder">📷 写真準備中</div>`;
+    return `<div class="store-card" data-id="${s.id}">
+      ${photoHtml}
+      <div class="store-card-body">
+        <div class="store-card-name">${s.name}</div>
+        <div class="store-card-addr">${s.address||'住所未設定'}</div>
+        <div class="status ${got?'got':'not'}">${got?'✅ スタンプ獲得済み':'未獲得'}</div>
+        <button class="btn btn-outline-blue store-card-mapbtn" data-map="${mapHref}">📍 Googleマップで見る</button>
+      </div>
+    </div>`;
+  }).join('');
+  wrap.innerHTML = `
+  <div class="screen" style="padding-top:6px;">
+  <h2 class="section-title">🏝️ 参加店舗一覧</h2>
+  <div class="store-grid">${cards}</div>
+  <button class="btn btn-ghost" id="back">戻る</button>
+  </div>`;
+  wrap.querySelectorAll('.store-card').forEach(r=>{
+    r.addEventListener('click', (e)=>{
+      if(e.target.closest('.store-card-mapbtn')) return;
+      go('storeDetail', {currentStoreId:r.dataset.id});
+    });
+  });
+  wrap.querySelectorAll('.store-card-mapbtn').forEach(b=>{
+    b.addEventListener('click', (e)=>{
+      e.stopPropagation();
+      window.open(b.dataset.map, '_blank', 'noopener');
+    });
+  });
+  wrap.querySelector('#back').onclick = ()=> go(state.participant? 'card':'top');
+  return wrap;
+}
+
+/* ---------- 店舗詳細 ---------- */
+function screenStoreDetail(cfg, stores){
+  const s = stores.find(x=>x.id===state.currentStoreId);
+  const wrap = el('<div class="screen"></div>');
+  const mapUrl = 'https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(s.address);
+  wrap.innerHTML = `
+  <img class="detail-photo" src="${s.photo||'https://images.weserv.nl/?url=placehold.co/400x220/AFD4E0/ffffff?text=Malia'}">
+  <div class="card">
+    <h2 class="section-title">🏠 ${s.name}</h2>
+    <div class="info-line"><span class="ico">📍</span><span>${s.address}</span></div>
+    <div class="info-line"><span class="ico">🕒</span><span>${s.hours}</span></div>
+    ${s.homepage? `<div class="info-line"><span class="ico">🔗</span><a href="${s.homepage}" target="_blank">ホームページ</a></div>`:''}
+    ${s.instagram? `<div class="info-line"><span class="ico">📷</span><a href="${s.instagram}" target="_blank">Instagram</a></div>`:''}
+    <div class="info-line"><span class="ico">🗺️</span><a href="${mapUrl}" target="_blank">地図で見る</a></div>
+    ${s.coupon? `<div class="coupon-box">🎁 クーポン：${s.coupon}</div>`:''}
+  </div>
+  <button class="btn btn-ghost" id="back">戻る</button>
+  `;
+  wrap.querySelector('#back').onclick = ()=> go('storeList');
+  return wrap;
+}
+
+/* ---------- QRスキャン（カメラで実際にQRコードを読み取る） ---------- */
+/* ---------- 4桁コード入力 ---------- */
+function screenCodeInput(cfg, stores){
+  const s = stores.find(x=>x.id===state.currentStoreId);
+  const wrap = el('<div class="screen"></div>');
+  wrap.innerHTML = `
+  <div class="card" style="text-align:center;">
+    <h2 class="section-title" style="justify-content:center;">🔑 コードを入力してください</h2>
+    <p style="font-size:13px;color:var(--ink-soft);">お店に掲示されている4桁の数字を入力すると、生き物が発見できます</p>
+    <div class="code-input-row" style="display:flex;gap:8px;justify-content:center;margin:20px 0;">
+      ${[0,1,2,3].map(i=>`<input class="code-box" style="width:52px;height:60px;text-align:center;font-size:26px;font-weight:900;border-radius:12px;border:2px solid #EFE2DC;" maxlength="1" inputmode="numeric" id="c${i}">`).join('')}
+    </div>
+    ${state.codeError? `<div class="err-msg">${state.codeError}</div>` : ''}
+    <button class="btn btn-primary" id="submit">生き物を発見する</button>
+    <button class="btn btn-ghost" id="back">図鑑を見る</button>
+  </div>`;
+  const boxes = [0,1,2,3].map(i=>wrap.querySelector('#c'+i));
+  boxes.forEach((b,i)=>{
+    b.oninput = ()=>{ b.value = b.value.replace(/[^0-9]/g,''); if(b.value && boxes[i+1]) boxes[i+1].focus(); };
+  });
+  wrap.querySelector('#submit').onclick = async ()=>{
+    const code = boxes.map(b=>b.value).join('');
+    if(code.length<4){ go('codeInput', {codeError:'4桁すべて入力してください'}); return; }
+    if(code !== s.code){ go('codeInput', {codeError:'コードが正しくありません'}); return; }
+    const p = state.participant || {stamps:[]};
+    if(p.stamps.includes(s.id)){ go('codeInput', {codeError:'この生き物はすでに発見済みです'}); return; }
+    await grantStamp(s.id);
+  };
+  wrap.querySelector('#back').onclick = ()=> go('card');
+  return wrap;
+}
+
+/* ---------- スタンプ付与処理（QR読み取り＝スタンプ獲得） ---------- */
+async function grantStamp(storeId){
+  if(!state.participant){ go('top'); return; }
+  if(state.participant.stamps.includes(storeId)){
+    go('codeInput', {currentStoreId:storeId, codeError:'この生き物はすでに発見済みです'});
+    return;
+  }
+  try{
+    const { error } = await sb.from('participant_stamps').insert({participant_id: state.participant.id, store_id: storeId});
+    if(error){
+      if(error.code==='23505'){ go('codeInput', {currentStoreId:storeId, codeError:'この生き物はすでに発見済みです'}); return; }
+      throw error;
+    }
+  }catch(e){
+    console.error('grantStamp failed', e);
+    go('codeInput', {currentStoreId:storeId, codeError:'通信エラーが発生しました。もう一度お試しください。'});
+    return;
+  }
+  state.participant.stamps.push(storeId);
+  go('gotStamp', {justGotStamp:storeId, codeError:''});
+}
+
+/* ---------- 生き物発見の演出 ---------- */
+async function screenGotStamp(cfg, stores){
+  const s = stores.find(x=>x.id===state.justGotStamp);
+  const info = CREATURE_INFO[s.icon] || {name:s.name, intro:''};
+  const p = state.participant || {nickname:'', stamps:[]};
+  const msg = remainMessage(p.stamps.length, cfg.requiredStamps);
+  const wrap = el('<div class="screen"></div>');
+  wrap.innerHTML = `
+  <div class="card get-anim" style="position:relative;overflow:hidden;">
+    ${['✨','⭐','✨','🌟'].map((sp,i)=>`<span class="sparkle" style="left:${12+i*24}%;top:6px;animation-delay:${i*0.15}s;">${sp}</span>`).join('')}
+    <div class="discover-glow"></div>
+    <div class="discover-badge">発見！</div>
+    <div class="stamp-pop discover-icon"><span class="icon-wrap got">${iconSVG(s.icon, 110)}</span></div>
+    <h2 style="margin:14px 0 2px;">新しい生き物を発見！</h2>
+    <p style="font-weight:900;font-size:17px;margin:2px 0;">${info.name}を発見しました！</p>
+    <p style="font-size:13px;color:var(--ink-soft);margin:2px 0 8px;">${info.intro}</p>
+    <p style="font-size:12.5px;color:var(--ink-soft);">湘南の夏 生きもの図鑑に登録されました</p>
+    ${msg? `<div class="remain-banner ${msg.final?'final':''}" style="margin-top:16px;"><div style="font-size:13px;font-weight:700;">${msg.overview}</div><div style="margin-top:4px;">${msg.tier}</div></div>`:''}
+  </div>
+  ${p.stamps.length===1? `<div class="card" style="text-align:center;margin-top:14px;"><div style="font-weight:700;">🎁 参加賞をゲット！</div><div class="small-note">図鑑画面から「塗り絵PDF」を開けます</div></div>`:''}
+  <button class="btn btn-primary" id="toCard">図鑑にもどる</button>
+  `;
+  wrap.querySelector('#toCard').onclick = ()=>{
+    if(p.stamps.length>=cfg.requiredStamps) go('complete'); else go('card');
+  };
+  if(p.stamps.length===2 || p.stamps.length===4){
+    const gachaStage = p.stamps.length===2 ? 3 : 5;
+    setTimeout(()=> showGachaUnlockPopup(gachaStage, cfg), 500);
+  } else if(p.stamps.length===3 || p.stamps.length===5){
+    const prizeStage = p.stamps.length;
+    setTimeout(async ()=>{
+      const seen = await hasSeenPrizePopup(prizeStage);
+      if(seen) return;
+      markPrizePopupSeen(prizeStage);
+      showPrizePopup(prizeStage, cfg);
+    }, 500);
+  }
+  return wrap;
+}
+
+/* ---------- レア生きものコレクション ---------- */
+async function screenRareCollection(cfg){
+  const wrap = el('<div class="screen"></div>');
+  const gotCount = state.participant ? state.participant.stamps.length : 0;
+  const GACHA_UNLOCK_STAMPS = {3:2, 5:4};
+  const r3 = gotCount>=GACHA_UNLOCK_STAMPS[3] ? await getGachaResult(3) : null;
+  const r5 = gotCount>=GACHA_UNLOCK_STAMPS[5] ? await getGachaResult(5) : null;
+  function slotHtml(stage, result, unlocked){
+    if(!unlocked){
+      return `<div class="card" style="text-align:center;"><div class="rare-icon rare-locked">${mysteryIconSVG(56)}</div><div style="margin-top:8px;font-weight:700;color:var(--ink-soft);">${GACHA_UNLOCK_STAMPS[stage]}個達成で解放</div></div>`;
+    }
+    if(!result){
+      return `<div class="card" style="text-align:center;"><div style="font-weight:700;margin-bottom:10px;">✨ ${stage===3?'1':'2'}回目のレア生きものガチャが解放されました！</div><button class="btn-gacha2" id="gachaBtn${stage}">レア生きものガチャを回す</button></div>`;
+    }
+    const m = RARE_ICON_MAP[result];
+    return `<div class="card" style="text-align:center;"><div class="rare-icon ${m?m.cls:''}">${rareIconSVG(result,70)}</div><div style="margin-top:8px;font-weight:900;">${result}</div></div>`;
+  }
+  wrap.innerHTML = `
+  <div class="topbar"><div class="logo">Malia</div><div class="sub">レア生きものコレクション</div></div>
+  <h2 class="section-title" style="padding:0 4px;">✨ レア生きものコレクション</h2>
+  ${slotHtml(3, r3, gotCount>=GACHA_UNLOCK_STAMPS[3])}
+  ${slotHtml(5, r5, gotCount>=GACHA_UNLOCK_STAMPS[5])}
+  <button class="btn btn-ghost" id="back">図鑑にもどる</button>
+  `;
+  const g3 = wrap.querySelector('#gachaBtn3'); if(g3) g3.onclick = ()=> go('gacha', {gachaStage:3});
+  const g5 = wrap.querySelector('#gachaBtn5'); if(g5) g5.onclick = ()=> go('gacha', {gachaStage:5});
+  wrap.querySelector('#back').onclick = ()=> go('card');
+  return wrap;
+}
+
+/* ---------- レア生きものガチャ ---------- */
+async function screenGacha(cfg){
+  const stage = state.gachaStage;
+  const wrap = el('<div class="screen"></div>');
+  const existing = await getGachaResult(stage);
+  function resultHtml(creature, note){
+    const m = RARE_ICON_MAP[creature];
+    return `
+      <div class="gacha-reveal">
+        ${['✨','⭐','💫','✨','⭐','🌟','✨','💫'].map((sp,i)=>`<span class="sparkle" style="left:${2+i*13}%;top:${i%2===0?-4:16}px;animation-delay:${i*0.1}s;">${sp}</span>`).join('')}
+        <div class="gacha-glow aurora-ring"></div>
+        <div class="rare-icon ${m?m.cls:''} rare-pop" style="margin:10px 0;">${rareIconSVG(creature,90)}</div>
+      </div>
+      <div style="font-weight:900;font-size:18px;" class="rare-name-pop rare-name-shine">${creature}</div>
+      <div class="small-note">${note}</div>
+      <button class="btn btn-primary" id="toCollection" style="margin-top:16px;">コレクションを見る</button>
+    `;
+  }
+  if(existing){
+    wrap.innerHTML = `
+    <div class="card" style="text-align:center;">
+      <h2 class="section-title" style="justify-content:center;">✨ ${stage===3?'1':'2'}回目のレア生きもの</h2>
+      ${resultHtml(existing, 'すでに引いた結果です')}
+    </div>`;
+    wrap.querySelector('#toCollection').onclick = ()=> go('rareCollection');
+    return wrap;
+  }
+  wrap.innerHTML = `
+  <div class="card" style="text-align:center;">
+    <h2 class="section-title" style="justify-content:center;">🎰 ${stage===3?'1':'2'}回目のレア生きものガチャ</h2>
+    <div class="gm-scene">
+      <svg class="gm-machine" id="gmMachine" viewBox="0 0 200 220">
+        <rect x="40" y="150" width="120" height="52" rx="8" fill="#EAF7FA" stroke="#17AFC2" stroke-width="4"/>
+        <rect x="55" y="118" width="12" height="22" fill="#EAF7FA" stroke="#17AFC2" stroke-width="4"/>
+        <rect x="133" y="118" width="12" height="22" fill="#EAF7FA" stroke="#17AFC2" stroke-width="4"/>
+        <circle cx="100" cy="88" r="62" fill="#EAF7FA" fill-opacity="0.55" stroke="#17AFC2" stroke-width="5"/>
+        <circle cx="78" cy="70" r="12" fill="#FFB199"/>
+        <circle cx="108" cy="60" r="10" fill="#4FD5E3"/>
+        <circle cx="128" cy="85" r="11" fill="#FFD873"/>
+        <circle cx="90" cy="100" r="10" fill="#FF9868"/>
+        <circle cx="118" cy="108" r="9" fill="#BFE3EE"/>
+        <circle cx="70" cy="105" r="8" fill="#FFC33D"/>
+        <rect x="82" y="165" width="36" height="16" rx="3" fill="#fff" stroke="#17AFC2" stroke-width="3"/>
+        <rect x="52" y="160" width="14" height="5" rx="2" fill="#17AFC2"/>
+        <g class="gm-handle">
+          <circle cx="158" cy="176" r="11" fill="#FF9868" stroke="#17AFC2" stroke-width="3"/>
+          <rect x="146" y="173" width="24" height="6" rx="3" fill="#17AFC2"/>
+        </g>
+      </svg>
+      <div class="gm-capsule-out" id="gmCapsuleOut">
+        <div class="gm-capsule-half top"></div>
+        <div class="gm-capsule-half bottom"></div>
+      </div>
+      <div id="gachaArea" style="display:none;"></div>
+    </div>
+    <p class="small-note" id="gachaHint">ボタンを押すと、レアな生き物が1匹決まります(1回だけ引けます)</p>
+    <button class="btn-gacha2" id="drawBtn">ガチャを回す！</button>
+    <button class="btn btn-ghost" id="back" style="margin-top:10px;">あとで引く</button>
+  </div>`;
+  wrap.querySelector('#back').onclick = ()=> go('card');
+  wrap.querySelector('#drawBtn').onclick = ()=>{
+    const drawBtn = wrap.querySelector('#drawBtn');
+    drawBtn.disabled = true;
+    const machine = wrap.querySelector('#gmMachine');
+    machine.classList.add('shake','handle-spin');
+    setTimeout(()=>{
+      const cap = wrap.querySelector('#gmCapsuleOut');
+      cap.classList.add('drop');
+      setTimeout(()=>{
+        cap.classList.add('open');
+        setTimeout(async ()=>{
+          cap.style.display = 'none';
+          machine.style.display = 'none';
+          wrap.querySelector('#gachaHint').style.display = 'none';
+          drawBtn.style.display = 'none';
+          const gachaArea = wrap.querySelector('#gachaArea');
+          gachaArea.style.display = 'block';
+          try{
+            const res = await drawGachaDB(stage);
+            gachaArea.innerHTML = resultHtml(res.creature, res.alreadyDrawn?'すでに引いた結果を表示しています':'おめでとうございます！');
+            gachaArea.querySelector('#toCollection').onclick = ()=> go('rareCollection');
+          }catch(e){
+            console.error('[gacha] 最終的に保存できませんでした', {stage, participantId: state.participant && state.participant.id, message:e && e.message, code:e && e.code, details:e && e.details, hint:e && e.hint, raw:e});
+            gachaArea.innerHTML = `<div class="err-msg">保存に失敗しました。もう一度お試しください。</div><button class="btn btn-primary" id="retryDraw">もう一度試す</button>`;
+            gachaArea.querySelector('#retryDraw').onclick = ()=> go('gacha', {gachaStage:stage});
+          }
+        }, 450);
+      }, 550);
+    }, 650);
+  };
+  return wrap;
+}
+
+/* ---------- 達成画面 ---------- */
+async function screenComplete(cfg){
+  const p = state.participant || {nickname:'', stamps:[]};
+  let ach = state.achievementInfo;
+  if(!ach){
+    try{
+      const { data: numData, error: numErr } = await sb.rpc('issue_achievement_number');
+      if(numErr) throw numErr;
+      const achievedAt = new Date().toISOString();
+      const { error } = await sb.from('achievements').insert({number:numData, participant_id:p.id, nickname:p.nickname, stamp_count:p.stamps.length, achieved_at:achievedAt});
+      if(error) throw error;
+      ach = {number:numData, nickname:p.nickname, stampCount:p.stamps.length, achievedAt};
+    }catch(e){
+      console.error('achievement issue failed', e);
+      ach = {number:'発行できませんでした', nickname:p.nickname, stampCount:p.stamps.length, achievedAt:new Date().toISOString()};
+    }
+    state.achievementInfo = ach;
+  }
+  const dt = new Date(ach.achievedAt);
+  const dtStr = dt.getFullYear()+'/'+(dt.getMonth()+1)+'/'+dt.getDate()+' '+String(dt.getHours()).padStart(2,'0')+':'+String(dt.getMinutes()).padStart(2,'0');
+  const confetti = ['🌸','✨','🎊','🌺','⭐'];
+  const entered3 = await getPrizeEntry(3);
+  const entered5 = await getPrizeEntry(5);
+  let unenteredRows = '';
+  if(!entered3) unenteredRows += prizeEntryRowHtml(3, false);
+  if(!entered5) unenteredRows += prizeEntryRowHtml(5, false);
+  const wrap = el('<div></div>');
+  wrap.innerHTML = `
+  <div class="complete-screen">
+    ${Array.from({length:16}).map((_,i)=>`<span class="confetti" style="left:${Math.random()*100}%;animation-duration:${2+Math.random()*2}s;animation-delay:${Math.random()*1.5}s;">${confetti[i%confetti.length]}</span>`).join('')}
+    <div style="position:relative;z-index:3;">
+      <div style="font-size:20px;font-weight:900;color:var(--pink-deep);">🌴 CONGRATULATIONS!! 🌴</div>
+      <div style="margin-top:6px;font-size:14px;font-weight:700;">おめでとうございます！コンプリートしました！🎉</div>
+      <div class="complete-stamp">COMPLETE</div>
+      <div class="achieve-card">
+        <div style="font-size:13px;color:var(--ink-soft);">参加者ニックネーム</div>
+        <div style="font-weight:900;font-size:17px;margin-bottom:8px;">${p.nickname} さん</div>
+        <div style="font-size:13px;color:var(--ink-soft);">キャンペーン</div>
+        <div style="font-weight:700;font-size:13.5px;margin-bottom:8px;">${cfg.campaignName}</div>
+        <div style="font-size:13px;color:var(--ink-soft);">獲得スタンプ数</div>
+        <div style="font-weight:700;margin-bottom:8px;">${ach.stampCount} 個</div>
+        <div style="font-size:13px;color:var(--ink-soft);">達成日時</div>
+        <div style="font-weight:700;margin-bottom:8px;">${dtStr}</div>
+        <div class="achieve-no">達成番号：<b>${ach.number}</b></div>
+      </div>
+      ${unenteredRows ? `<div class="card prize-entry-card" style="margin-top:18px;text-align:left;"><h2 class="section-title">🎁 まだ応募していない景品があります</h2>${unenteredRows}</div>` : ''}
+      <div class="card" style="margin-top:18px;text-align:left;">
+        <div style="font-weight:700;margin-bottom:8px;">📸 この画面をスクリーンショットして、以下へ送ってください</div>
+        ${cfg.sendMethods.line? `<div class="info-line"><span class="ico">💬</span><a href="${cfg.lineUrl}" target="_blank">Malia公式LINE</a></div>`:''}
+        ${cfg.sendMethods.instagram? `<div class="info-line"><span class="ico">📷</span><a href="${cfg.instagramUrl}" target="_blank">Instagram DM</a></div>`:''}
+        ${cfg.sendMethods.email? `<div class="info-line"><span class="ico">✉️</span><span>${cfg.contactEmail}</span></div>`:''}
+      </div>
+      <button class="btn btn-secondary" id="toCert" style="margin-top:14px;">🎓 デジタル認定証を見る</button>
+      <button class="btn btn-secondary" id="backTop" style="margin-top:16px;">トップにもどる</button>
+    </div>
+  </div>`;
+  wrap.querySelector('#backTop').onclick = ()=> go('card');
+  wrap.querySelector('#toCert').onclick = ()=> go('certificate');
+  wirePrizeSection(wrap, cfg);
+  return wrap;
+}
+
+/* ---------- デジタル認定証 ---------- */
+function loadExternalScript(src){
+  return new Promise((resolve, reject)=>{
+    if(document.querySelector(`script[src="${src}"]`)){ resolve(); return; }
+    const s = document.createElement('script');
+    s.src = src; s.onload = ()=>resolve(); s.onerror = ()=>reject(new Error('script load failed'));
+    document.head.appendChild(s);
+  });
+}
+async function screenCertificate(cfg){
+  const p = state.participant || {nickname:'', stamps:[]};
+  const wrap = el('<div class="screen"></div>');
+  let ach = state.achievementInfo;
+  if(!ach && p.id){
+    try{
+      const { data } = await sb.from('achievements').select('*').eq('participant_id', p.id).order('achieved_at',{ascending:false}).limit(1).maybeSingle();
+      if(data) ach = {number:data.number, nickname:data.nickname, stampCount:data.stamp_count, achievedAt:data.achieved_at};
+    }catch(e){ console.error('cert fetch failed', e); }
+  }
+  if(!ach){
+    wrap.innerHTML = `<div class="card" style="text-align:center;"><p>まだ達成記録が見つかりません。</p><button class="btn btn-ghost" id="back">もどる</button></div>`;
+    wrap.querySelector('#back').onclick = ()=> go('card');
+    return wrap;
+  }
+  const dt = new Date(ach.achievedAt);
+  const dtStr = dt.getFullYear()+'年'+(dt.getMonth()+1)+'月'+dt.getDate()+'日';
+  wrap.innerHTML = `
+  <div class="cert4-wrap">
+    <div class="cert4-frame" id="certCard4">
+      <img class="cert4-bg" src="cert-bg.png" alt="賞状背景" id="certBgImg">
+      <div class="cert4-overlay" id="certOverlay">
+        <div class="cert4-title">にんていしょう</div>
+        <div class="cert4-name">${ach.nickname}<span class="honor">さん</span></div>
+        <div class="cert4-body">
+          あなたは Malia おでかけスタンプラリーにおいて<br>
+          いきものずかんを見事完成されました。<br>
+          そのがんばりをたたえ、ここに認定します。
+        </div>
+        <div class="cert4-meta">
+          <span>達成日：${dtStr}</span>
+          <span class="sep">｜</span>
+          <span>達成番号：${ach.number}</span>
+        </div>
+      </div>
+      <div class="cert4-loading" id="certLoading">
+        <div class="cert4-spinner"></div>
+        <div>認定証を作成しています…</div>
+      </div>
+    </div>
+  </div>
+  <div class="small-note" style="text-align:center;margin-top:8px;">タップすると拡大して確認できます</div>
+  <div class="small-note" style="text-align:center;margin-top:10px;font-weight:700;">📸 この画面をスクリーンショットして保存してね</div>
+  <button class="btn btn-ghost" id="back" style="margin-top:14px;">もどる</button>
+  `;
+  const certFrame = wrap.querySelector('#certCard4');
+  const certOverlay = wrap.querySelector('#certOverlay');
+  const certLoading = wrap.querySelector('#certLoading');
+  const certBgImg = wrap.querySelector('#certBgImg');
+  function sizeCertificate(){
+    if(!certFrame) return;
+    const w = certFrame.offsetWidth;
+    if(!w) return;
+    certFrame.style.fontSize = (w*0.01)+'px';
+  }
+  window.addEventListener('resize', sizeCertificate);
+  async function waitImageReady(img){
+    if(img.decode){ try{ await img.decode(); return; }catch(e){} }
+    if(img.complete) return;
+    await new Promise(res=>{ img.addEventListener('load', res, {once:true}); img.addEventListener('error', res, {once:true}); });
+  }
+  async function revealCertificateWhenReady(){
+    try{ await waitImageReady(certBgImg); }catch(e){}
+    try{ if(document.fonts && document.fonts.ready) await document.fonts.ready; }catch(e){}
+    sizeCertificate();
+    requestAnimationFrame(()=>{
+      requestAnimationFrame(()=>{
+        sizeCertificate();
+        certLoading.style.display = 'none';
+        certOverlay.style.visibility = 'visible';
+      });
+    });
+  }
+  revealCertificateWhenReady();
+  certFrame.addEventListener('click', ()=>{ document.body.classList.toggle('cert-zoomed'); setTimeout(sizeCertificate, 260); });
+
+  wrap.querySelector('#back').onclick = ()=> go('card');
+  return wrap;
+}
+
+/* ---------- 管理者ログイン ---------- */
+function screenAdminLogin(cfg){
+  const wrap = el('<div class="screen"></div>');
+  wrap.innerHTML = `
+  <div class="card">
+    <h2 class="section-title">🔐 管理者ログイン</h2>
+    <label>メールアドレス</label>
+    <input type="email" id="email" value="" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false">
+    <label>パスワード</label>
+    <input type="password" id="pw" value="" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false">
+    <div class="err-msg" id="err" style="display:none;"></div>
+    <button class="btn btn-primary" id="login">ログイン</button>
+    <button class="btn btn-ghost" id="back">戻る</button>
+    <div class="small-note" style="text-align:center;margin-top:14px;">初期ログイン情報：${cfg.adminEmail} ／ ${cfg.adminPassword}</div>
+  </div>`;
+  wrap.querySelector('#back').onclick = ()=> go('top');
+  wrap.querySelector('#login').onclick = ()=>{
+    const email = wrap.querySelector('#email').value.trim().toLowerCase();
+    const pw = wrap.querySelector('#pw').value.trim();
+    if(email===(cfg.adminEmail||'').trim().toLowerCase() && pw===(cfg.adminPassword||'').trim()){
+      state.admin = true; go('adminHome');
+    } else {
+      const errEl = wrap.querySelector('#err');
+      errEl.textContent='メールアドレスまたはパスワードが正しくありません'; errEl.style.display='block';
+    }
+  };
+  return wrap;
+}
+
+/* ---------- 管理画面トップ ---------- */
+async function screenAdminHome(cfg, stores){
+  if(!state.admin){ go('adminLogin'); return el('<div></div>'); }
+  const wrap = el('<div class="screen"></div>');
+  const tabs = ['stores','participants','achievers','errorlogs','settings'];
+  const tabLabel = {stores:'店舗管理', participants:'参加者', achievers:'達成者', errorlogs:'エラーログ', settings:'設定'};
+  wrap.innerHTML = `
+  <div class="topbar"><div class="logo">Malia 管理画面</div><button class="link-btn" id="logout">ログアウト</button></div>
+  <div class="tabbar">${tabs.map(t=>`<button data-t="${t}" class="${state.adminTab===t?'active':''}">${tabLabel[t]}</button>`).join('')}</div>
+  <div id="tabBody"></div>
+  `;
+  wrap.querySelectorAll('.tabbar button').forEach(b=> b.onclick = ()=>{ state.adminTab=b.dataset.t; render(); });
+  wrap.querySelector('#logout').onclick = ()=>{ state.admin=false; go('top'); };
+
+  const body = wrap.querySelector('#tabBody');
+  if(state.adminTab==='stores') body.appendChild(await adminStores(cfg, stores));
+  if(state.adminTab==='participants') body.appendChild(await adminParticipants(cfg, stores));
+  if(state.adminTab==='achievers') body.appendChild(await adminAchievers(cfg));
+  if(state.adminTab==='errorlogs') body.appendChild(await adminErrorLogs(cfg));
+  if(state.adminTab==='settings') body.appendChild(adminSettings(cfg));
+  return wrap;
+}
+
+async function adminStores(cfg, stores){
+  const wrap = el('<div></div>');
+  if(state.editingStore){
+    const s = stores.find(x=>x.id===state.editingStore) || {id:'', name:'', icon:'turtle', code:'', photo:'', address:'', hours:'', homepage:'', instagram:'', coupon:'', mapUrl:''};
+    const isNew = !stores.find(x=>x.id===state.editingStore);
+    let currentPhoto = s.photo || '';
+    wrap.innerHTML = `
+    <div class="card">
+      <h2 class="section-title">${isNew?'➕ 店舗を追加':'✏️ 店舗を編集'}</h2>
+      <label>店舗ID（英数字・重複不可）</label><input id="f_id" value="${s.id}" ${isNew?'':'disabled'}>
+      <label>店舗名</label><input id="f_name" value="${s.name}">
+      <label>割り当てる生き物</label>
+      <select id="f_icon">${ICON_KEYS.map(k=>`<option value="${k}" ${s.icon===k?'selected':''}>${ICON_LABELS[k]}</option>`).join('')}</select>
+      <label>発見用の4桁コード（お店に掲示）</label><input id="f_code" value="${s.code||''}" maxlength="4">
+      <label>店舗写真</label>
+      <div style="margin-bottom:12px;">
+        <img id="photoPreview" src="${currentPhoto || 'https://images.weserv.nl/?url=placehold.co/300x200/F3ECE2/9c8a7a?text=写真準備中'}" style="width:100%;max-width:260px;aspect-ratio:3/2;object-fit:cover;border-radius:12px;display:block;margin-bottom:8px;background:#F3ECE2;">
+        <input type="file" id="f_photo_file" accept="image/jpeg,image/png,image/webp" style="display:none;">
+        <button type="button" class="btn btn-secondary" id="photoUploadBtn">📷 写真をアップロード（差し替え）</button>
+        <div id="photoUploadMsg" class="small-note" style="display:none;"></div>
+      </div>
+      <label>住所</label><input id="f_address" value="${s.address}">
+      <label>GoogleマップのURL（空欄なら住所から自動で作成されます）</label><input id="f_mapurl" value="${s.mapUrl||''}" placeholder="https://maps.app.goo.gl/...">
+      <label>営業時間</label><input id="f_hours" value="${s.hours}">
+      <label>ホームページURL</label><input id="f_homepage" value="${s.homepage}">
+      <label>Instagram URL</label><input id="f_instagram" value="${s.instagram}">
+      <label>クーポン情報</label><input id="f_coupon" value="${s.coupon}">
+      <button class="btn btn-primary" id="save">保存する</button>
+      <button class="btn btn-ghost" id="cancel">キャンセル</button>
+    </div>`;
+    wrap.querySelector('#cancel').onclick = ()=>{ state.editingStore=null; render(); };
+
+    const ALLOWED_TYPES = ['image/jpeg','image/png','image/webp'];
+    const MAX_SIZE = 5*1024*1024;
+    wrap.querySelector('#photoUploadBtn').onclick = ()=> wrap.querySelector('#f_photo_file').click();
+    wrap.querySelector('#f_photo_file').onchange = async (e)=>{
+      const file = e.target.files[0];
+      const msgEl = wrap.querySelector('#photoUploadMsg');
+      msgEl.style.display = 'none';
+      if(!file) return;
+      const storeId = wrap.querySelector('#f_id').value.trim();
+      if(!storeId){ msgEl.textContent = '先に店舗IDを入力してください。'; msgEl.style.display='block'; return; }
+      if(!ALLOWED_TYPES.includes(file.type)){ msgEl.textContent = 'JPEG・PNG・WebPの画像のみアップロードできます。'; msgEl.style.display='block'; return; }
+      if(file.size > MAX_SIZE){ msgEl.textContent = 'ファイルサイズは5MB以下にしてください。'; msgEl.style.display='block'; return; }
+      msgEl.textContent = 'アップロード中…'; msgEl.style.display='block';
+      try{
+        const path = storeId + '.img';
+        const { error: upErr } = await sb.storage.from('store-photos').upload(path, file, { upsert:true, contentType:file.type });
+        if(upErr) throw upErr;
+        const { data: pub } = sb.storage.from('store-photos').getPublicUrl(path);
+        const url = pub.publicUrl + '?t=' + Date.now();
+        currentPhoto = url;
+        wrap.querySelector('#photoPreview').src = url;
+        msgEl.textContent = '✔ アップロードが完了しました';
+      }catch(err){
+        console.error('photo upload failed', err);
+        msgEl.textContent = 'アップロードに失敗しました。もう一度お試しください。';
+      }
+    };
+
+    wrap.querySelector('#save').onclick = async ()=>{
+      const newS = {
+        id: wrap.querySelector('#f_id').value.trim(),
+        name: wrap.querySelector('#f_name').value.trim(),
+        icon: wrap.querySelector('#f_icon').value,
+        code: wrap.querySelector('#f_code').value.trim(),
+        photo: currentPhoto,
+        address: wrap.querySelector('#f_address').value.trim(),
+        mapUrl: wrap.querySelector('#f_mapurl').value.trim(),
+        hours: wrap.querySelector('#f_hours').value.trim(),
+        homepage: wrap.querySelector('#f_homepage').value.trim(),
+        instagram: wrap.querySelector('#f_instagram').value.trim(),
+        coupon: wrap.querySelector('#f_coupon').value.trim(),
+      };
+      if(!newS.id || !newS.name){ alert('店舗IDと店舗名は必須です'); return; }
+      try{
+        await saveStoreDB(newS);
+      }catch(e){ alert('保存に失敗しました。もう一度お試しください。'); return; }
+      state.editingStore=null;
+      if(isNew){ state.justAddedStoreId = newS.id; }
+      render();
+    };
+    return wrap;
+  }
+  const rows = stores.map(s=>`
+    <tr>
+      <td>${s.name}</td><td>${s.id}</td>
+      <td><button class="link-btn" data-edit="${s.id}">編集</button></td>
+      <td><button class="link-btn" data-qr="${s.id}" style="color:#8EC0CF;">QR</button></td>
+      <td><button class="link-btn" data-del="${s.id}" style="color:#C0555F;">削除</button></td>
+    </tr>`).join('');
+  wrap.innerHTML = `
+  <div class="card">
+    <h2 class="section-title">🏪 店舗一覧（${stores.length}件）</h2>
+    <table class="admin-table"><thead><tr><th>店舗名</th><th>ID</th><th></th><th></th><th></th></tr></thead><tbody>${rows}</tbody></table>
+    <button class="btn btn-primary" id="addNew" style="margin-top:14px;">＋ 新しい店舗を追加</button>
+  </div>
+  <div id="qrArea"></div>
+  `;
+  wrap.querySelector('#addNew').onclick = ()=>{ state.editingStore='__new__'+Date.now(); render(); };
+  wrap.querySelectorAll('[data-edit]').forEach(b=> b.onclick = ()=>{ state.editingStore=b.dataset.edit; render(); });
+  wrap.querySelectorAll('[data-del]').forEach(b=> b.onclick = async ()=>{
+    if(!confirm('この店舗を削除しますか？')) return;
+    await deleteStoreDB(b.dataset.del);
+    render();
+  });
+  wrap.querySelectorAll('[data-qr]').forEach(b=> b.onclick = ()=> showQr(b.dataset.qr, wrap.querySelector('#qrArea')));
+  if(state.justAddedStoreId){
+    const newId = state.justAddedStoreId;
+    state.justAddedStoreId = null;
+    showQr(newId, wrap.querySelector('#qrArea'), `<div class="small-note" style="text-align:center;margin-bottom:8px;">🎉 新しい店舗を追加しました。QRコードを自動生成しました。</div>`);
+  }
+  return wrap;
+}
+
+function showQr(storeId, container, extraNote){
+  container.innerHTML = `${extraNote||''}<div class="qr-box"><div id="qrcanvas"></div>
+    <div class="small-note">店舗「${storeId}」用QRコード。印刷するか、スマホやタブレットの画面に表示して掲示してください。</div>
+    <button class="btn btn-secondary" id="dlQr" style="margin-top:10px;">画像として保存する</button>
+  </div>`;
+  const url = location.href.split('?')[0] + '?store=' + storeId;
+  new QRCode(container.querySelector('#qrcanvas'), {text:url, width:200, height:200});
+  container.querySelector('#dlQr').onclick = ()=>{
+    setTimeout(()=>{
+      const canvas = container.querySelector('#qrcanvas canvas');
+      if(!canvas) return;
+      const link = document.createElement('a');
+      link.download = 'malia-qr-'+storeId+'.png';
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+    }, 100);
+  };
+}
+
+async function adminParticipants(cfg, stores){
+  const wrap = el('<div class="card"></div>');
+  const { data: parts, error } = await sb.from('participants').select('id,nickname');
+  if(error || !parts || parts.length===0){
+    wrap.innerHTML = `<h2 class="section-title">👨‍👩‍👧 参加者一覧</h2><p>まだ参加者がいません。</p>`;
+    return wrap;
+  }
+  const { data: stampRows } = await sb.from('participant_stamps').select('participant_id,store_id');
+  const list = parts.map(p=>({
+    nickname:p.nickname,
+    stamps:(stampRows||[]).filter(s=>s.participant_id===p.id).map(s=>s.store_id)
+  }));
+  const rows = list.map(p=>`<tr><td>${p.nickname}</td><td>${p.stamps.length}/${cfg.requiredStamps}</td><td>${p.stamps.join(', ')}</td></tr>`).join('');
+  wrap.innerHTML = `
+  <h2 class="section-title">👨‍👩‍👧 参加者一覧（${list.length}人）</h2>
+  <table class="admin-table"><thead><tr><th>ニックネーム</th><th>取得数</th><th>取得店舗</th></tr></thead><tbody>${rows}</tbody></table>`;
+  return wrap;
+}
+
+async function adminAchievers(cfg){
+  const wrap = el('<div class="card"></div>');
+  const { data, error } = await sb.from('achievements').select('*').order('achieved_at', {ascending:false});
+  const list = (error || !data) ? [] : data.map(a=>({number:a.number, nickname:a.nickname, stampCount:a.stamp_count, achievedAt:a.achieved_at}));
+  wrap.innerHTML = `
+  <h2 class="section-title">🏆 達成者一覧（${list.length}人）</h2>
+  <label>達成番号で検索</label>
+  <input type="text" id="search" placeholder="例）MALIA-2026-000001">
+  <div id="results"></div>
+  `;
+  function renderList(items){
+    const rows = items.map(a=>{
+      const dt = new Date(a.achievedAt);
+      const dtStr = dt.getFullYear()+'/'+(dt.getMonth()+1)+'/'+dt.getDate()+' '+String(dt.getHours()).padStart(2,'0')+':'+String(dt.getMinutes()).padStart(2,'0');
+      return `<tr><td>${a.number}</td><td>${a.nickname}</td><td>${a.stampCount}</td><td>${dtStr}</td></tr>`;
+    }).join('');
+    return `<table class="admin-table"><thead><tr><th>達成番号</th><th>ニックネーム</th><th>数</th><th>達成日時</th></tr></thead><tbody>${rows}</tbody></table>`;
+  }
+  wrap.querySelector('#results').innerHTML = renderList(list);
+  wrap.querySelector('#search').oninput = (e)=>{
+    const q = e.target.value.trim().toLowerCase();
+    const filtered = q? list.filter(a=>a.number.toLowerCase().includes(q)) : list;
+    wrap.querySelector('#results').innerHTML = renderList(filtered);
+  };
+  return wrap;
+}
+
+async function adminErrorLogs(cfg){
+  const wrap = el('<div class="card"></div>');
+  const { data, error } = await sb.from('gacha_error_logs').select('*').order('created_at', {ascending:false}).limit(100);
+  const list = (error || !data) ? [] : data;
+  if(error){ console.error('adminErrorLogs failed', error); }
+  const rows = list.map(l=>{
+    const dt = new Date(l.created_at);
+    const dtStr = dt.getFullYear()+'/'+(dt.getMonth()+1)+'/'+dt.getDate()+' '+String(dt.getHours()).padStart(2,'0')+':'+String(dt.getMinutes()).padStart(2,'0');
+    return `<tr>
+      <td>${dtStr}</td>
+      <td>${l.nickname||'(不明)'}</td>
+      <td>${l.stage||''}</td>
+      <td style="max-width:220px;word-break:break-all;">${l.error_message||''}</td>
+      <td>${l.error_code||''}</td>
+    </tr>`;
+  }).join('');
+  wrap.innerHTML = `
+  <h2 class="section-title">🛠️ ガチャ保存エラーログ（${list.length}件）</h2>
+  <div class="small-note" style="margin-bottom:10px;">ガチャの保存が3回再試行しても失敗した場合に、自動で記録されます。参加者の画面には表示されません。新しい順に最大100件表示しています。</div>
+  ${list.length===0 ? `<div class="small-note">記録されているエラーはありません。</div>` : `
+  <div style="overflow-x:auto;">
+  <table class="admin-table">
+    <thead><tr><th>日時</th><th>ニックネーム</th><th>回数</th><th>エラー内容</th><th>コード</th></tr></thead>
+    <tbody>${rows}</tbody>
+  </table>
+  </div>`}
+  `;
+  return wrap;
+}
+
+function adminSettings(cfg){
+  const wrap = el('<div class="card"></div>');
+  wrap.innerHTML = `
+  <h2 class="section-title">⚙️ キャンペーン設定</h2>
+  <label>キャンペーン名</label><input id="s_name" value="${cfg.campaignName}">
+  <label>達成に必要なスタンプ数</label><input type="number" id="s_req" value="${cfg.requiredStamps}">
+  <label>開始日</label><input type="date" id="s_start" value="${cfg.startDate}">
+  <label>終了日</label><input type="date" id="s_end" value="${cfg.endDate}">
+  <label>管理者メールアドレス</label><input id="s_email" value="${cfg.adminEmail}">
+  <label>管理者パスワード</label><input id="s_pw" value="${cfg.adminPassword}">
+  <label>Malia公式LINE URL</label><input id="s_line" value="${cfg.lineUrl}">
+  <label>Instagram URL</label><input id="s_insta" value="${cfg.instagramUrl}">
+  <label>問い合わせメールアドレス</label><input id="s_contact" value="${cfg.contactEmail}">
+  <label>スクリーンショット送付方法</label>
+  <div style="margin-bottom:12px;">
+    <label style="display:inline;"><input type="checkbox" id="m_line" ${cfg.sendMethods.line?'checked':''}> LINE</label>&nbsp;&nbsp;
+    <label style="display:inline;"><input type="checkbox" id="m_insta" ${cfg.sendMethods.instagram?'checked':''}> Instagram</label>&nbsp;&nbsp;
+    <label style="display:inline;"><input type="checkbox" id="m_email" ${cfg.sendMethods.email?'checked':''}> メール</label>
+  </div>
+  <button class="btn btn-primary" id="saveSettings">設定を保存する</button>
+  <div id="savedMsg" style="display:none;color:#4CAF7D;font-weight:700;margin-top:8px;">✔ 保存しました</div>
+  `;
+  wrap.querySelector('#saveSettings').onclick = async ()=>{
+    const newCfg = {
+      campaignName: wrap.querySelector('#s_name').value,
+      requiredStamps: parseInt(wrap.querySelector('#s_req').value)||5,
+      startDate: wrap.querySelector('#s_start').value,
+      endDate: wrap.querySelector('#s_end').value,
+      adminEmail: wrap.querySelector('#s_email').value,
+      adminPassword: wrap.querySelector('#s_pw').value,
+      lineUrl: wrap.querySelector('#s_line').value,
+      instagramUrl: wrap.querySelector('#s_insta').value,
+      contactEmail: wrap.querySelector('#s_contact').value,
+      sendMethods:{
+        line: wrap.querySelector('#m_line').checked,
+        instagram: wrap.querySelector('#m_insta').checked,
+        email: wrap.querySelector('#m_email').checked,
+      }
+    };
+    await saveConfigDB(newCfg);
+    wrap.querySelector('#savedMsg').style.display='block';
+  };
+  return wrap;
+}
+
+/* =============== URLパラメータでQRコード読み取りを再現 =============== */
+(async function init(){
+  if(!SUPABASE_CONFIGURED){
+    document.getElementById('app').innerHTML = `
+      <div style="padding:60px 24px;text-align:center;">
+        <div style="font-size:40px;margin-bottom:14px;">🔧</div>
+        <h2 style="margin-bottom:10px;">Supabaseの接続設定がまだです</h2>
+        <p style="font-size:13.5px;color:var(--ink-soft);line-height:1.7;">
+          このファイルの中にある<br>SUPABASE_URL と SUPABASE_ANON_KEY を、<br>ご自身のSupabaseプロジェクトの値に書き換えてください。
+        </p>
+      </div>`;
+    return;
+  }
+  const params = new URLSearchParams(location.search);
+  const storeParam = params.get('store');
+  await boot();
+  if(storeParam){
+    const stores = await getStoresDB();
+    if(stores.find(s=>s.id===storeParam)){
+      if(!state.participant){ state.pendingStoreId = storeParam; go('join'); }
+      else{ go('codeInput', {currentStoreId:storeParam, codeError:''}); }
+    }
+  }
+})();
+</script>
+</body>
+</html>
