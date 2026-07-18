@@ -1049,6 +1049,8 @@ async function screenCard(cfg, stores){
   <div class="card" style="text-align:center;">
     <div style="font-weight:700;">🎁 参加賞をゲット！</div>
     <button class="btn btn-secondary" id="coloringBtn" style="margin-top:10px;">ぬりえPDFを開く</button>
+    <button class="btn btn-outline-blue" id="coloringDlBtn" style="margin-top:8px;">⬇️ 塗り絵をダウンロード</button>
+    <div class="small-note" style="margin-top:6px;">ダウンロードしたPDFは、ご家庭やお店のプリンターでA4サイズのまま印刷してお使いいただけます</div>
     <div id="coloringMsg" class="small-note" style="display:none;"></div>
   </div>` : ''}
   ${gotCount>=2 ? `<button class="btn btn-outline-blue" id="rareBtn">✨ レア生きものコレクション</button>` : ''}
@@ -1072,6 +1074,23 @@ async function screenCard(cfg, stores){
       const res = await fetch('coloring.pdf', {method:'HEAD'});
       if(res.ok){ window.open('coloring.pdf', '_blank'); }
       else { msgEl.textContent='ぬりえは準備中です。しばらくお待ちください。'; msgEl.style.display='block'; }
+    }catch(e){ msgEl.textContent='ぬりえは準備中です。しばらくお待ちください。'; msgEl.style.display='block'; }
+  };
+  const colDlBtn = wrap.querySelector('#coloringDlBtn');
+  if(colDlBtn) colDlBtn.onclick = async ()=>{
+    const msgEl = wrap.querySelector('#coloringMsg');
+    try{
+      const res = await fetch('coloring.pdf', {method:'HEAD'});
+      if(res.ok){
+        const link = document.createElement('a');
+        link.href = 'coloring.pdf';
+        link.download = 'malia-nurie.pdf';
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+      } else {
+        msgEl.textContent='ぬりえは準備中です。しばらくお待ちください。'; msgEl.style.display='block';
+      }
     }catch(e){ msgEl.textContent='ぬりえは準備中です。しばらくお待ちください。'; msgEl.style.display='block'; }
   };
   return wrap;
