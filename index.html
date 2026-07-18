@@ -12,7 +12,6 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700;900&family=Noto+Sans+JP:wght@400;500;700&family=Noto+Serif+JP:wght@700;900&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jsQR/1.4.0/jsQR.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <style>
 :root{
@@ -299,7 +298,7 @@ table.admin-table th{color:var(--ink-soft);font-weight:700;}
 <script>
 /* =============== Supabase 接続設定 =============== */
 /* ↓↓↓ この2つを、ご自身のSupabaseプロジェクトの値に書き換えてください ↓↓↓ */
-const SUPABASE_URL = 'https://qaugcybfnqgeftpihojy.supabase.co/';
+const SUPABASE_URL = 'https://qaugcybfnqgeftpihojy.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFhdWdjeWJmbnFnZWZ0cGlob2p5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM4MzI5MzEsImV4cCI6MjA5OTQwODkzMX0.zEDGFD87PAU3mfctp4ESOrfw55JKNr5_pwTyXJeMn9s';
 /* ↑↑↑ ここまで ↑↑↑ */
 const SUPABASE_CONFIGURED = SUPABASE_URL.indexOf('YOUR_SUPABASE_URL_HERE')===-1 && SUPABASE_ANON_KEY.indexOf('YOUR_SUPABASE_ANON_KEY_HERE')===-1;
@@ -565,12 +564,8 @@ const state = {
   storeListTarget:null,
 };
 
-function go(screen, extra){ stopCamera(); Object.assign(state, {screen}, extra||{}); render(); window.scrollTo(0,0); }
+function go(screen, extra){ Object.assign(state, {screen}, extra||{}); render(); window.scrollTo(0,0); }
 
-let activeStream = null;
-function stopCamera(){
-  if(activeStream){ activeStream.getTracks().forEach(t=>t.stop()); activeStream = null; }
-}
 
 function remainingCount(p, required){ return Math.max(required - (p? p.stamps.length : 0), 0); }
 
@@ -636,7 +631,6 @@ async function renderScreen(){
   if(state.screen==='card') return await screenCard(cfg, stores);
   if(state.screen==='storeList') return await screenStoreList(cfg, stores);
   if(state.screen==='storeDetail') return screenStoreDetail(cfg, stores);
-  if(state.screen==='scan') return screenScan(cfg, stores);
   if(state.screen==='codeInput') return screenCodeInput(cfg, stores);
   if(state.screen==='gotStamp') return await screenGotStamp(cfg, stores);
   if(state.screen==='complete') return await screenComplete(cfg);
@@ -824,80 +818,6 @@ function screenStoreDetail(cfg, stores){
 }
 
 /* ---------- QRスキャン（カメラで実際にQRコードを読み取る） ---------- */
-function screenScan(cfg, stores){
-  const wrap = el('<div class="screen"></div>');
-  const opts = stores.map(s=>`<option value="${s.id}">${s.name}</option>`).join('');
-  wrap.innerHTML = `
-  <div class="card">
-    <h2 class="section-title">📷 QRコードを読み取る</h2>
-    <p style="font-size:13px;color:var(--ink-soft);">お店に掲示されているQRコードにカメラを向けてください。読み取れたら、お店に掲示されている4桁コードの入力にすすみます。</p>
-    <button class="btn btn-primary" id="camBtn">カメラを起動する</button>
-    <div id="camWrap" style="display:none;margin-top:12px;">
-      <video id="camVideo" playsinline style="width:100%;border-radius:16px;background:#000;"></video>
-      <div class="small-note" style="text-align:center;">QRコードを画面の中央に映してください</div>
-      <button class="btn btn-ghost" id="camStop">カメラを止める</button>
-    </div>
-    ${state.codeError? `<div class="err-msg">${state.codeError}</div>` : ''}
-    <details style="margin-top:14px;">
-      <summary style="font-size:12.5px;color:var(--ink-soft);cursor:pointer;">カメラが使えない場合（テスト用に店舗を選ぶ）</summary>
-      <div style="margin-top:10px;">
-        <select id="storeSel">${opts}</select>
-        <button class="btn btn-secondary" id="manualGet">この店舗を選ぶ</button>
-      </div>
-    </details>
-    <button class="btn btn-ghost" id="back">戻る</button>
-  </div>`;
-
-  wrap.querySelector('#back').onclick = ()=> go('card');
-  wrap.querySelector('#manualGet').onclick = ()=>{
-    const id = wrap.querySelector('#storeSel').value;
-    go('codeInput', {currentStoreId:id, codeError:''});
-  };
-
-  wrap.querySelector('#camBtn').onclick = async ()=>{
-    const camWrap = wrap.querySelector('#camWrap');
-    const video = wrap.querySelector('#camVideo');
-    try{
-      const stream = await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'}});
-      activeStream = stream;
-      video.srcObject = stream;
-      await video.play();
-      camWrap.style.display = 'block';
-      wrap.querySelector('#camBtn').style.display = 'none';
-      const canvas = document.createElement('canvas');
-      const ctx = canvas.getContext('2d');
-      function tick(){
-        if(!activeStream) return; // camera stopped
-        if(video.readyState === video.HAVE_ENOUGH_DATA){
-          canvas.width = video.videoWidth; canvas.height = video.videoHeight;
-          ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-          const imageData = ctx.getImageData(0,0,canvas.width,canvas.height);
-          const code = jsQR(imageData.data, imageData.width, imageData.height);
-          if(code && code.data){
-            let storeId = null;
-            try{ const u = new URL(code.data); storeId = u.searchParams.get('store'); }catch(e){ storeId = null; }
-            if(storeId && stores.find(s=>s.id===storeId)){
-              stopCamera();
-              go('codeInput', {currentStoreId:storeId, codeError:''});
-              return;
-            }
-          }
-        }
-        requestAnimationFrame(tick);
-      }
-      requestAnimationFrame(tick);
-    }catch(e){
-      go('scan', {codeError:'カメラを起動できませんでした。ブラウザのカメラ許可設定をご確認いただくか、下の「カメラが使えない場合」からお試しください。'});
-    }
-  };
-  wrap.querySelector('#camStop').onclick = ()=>{
-    stopCamera();
-    wrap.querySelector('#camWrap').style.display='none';
-    wrap.querySelector('#camBtn').style.display='block';
-  };
-  return wrap;
-}
-
 /* ---------- 4桁コード入力 ---------- */
 function screenCodeInput(cfg, stores){
   const s = stores.find(x=>x.id===state.currentStoreId);
@@ -925,7 +845,7 @@ function screenCodeInput(cfg, stores){
     if(p.stamps.includes(s.id)){ go('codeInput', {codeError:'この生き物はすでに発見済みです'}); return; }
     await grantStamp(s.id);
   };
-  wrap.querySelector('#back').onclick = ()=> go('scan');
+  wrap.querySelector('#back').onclick = ()=> go('card');
   return wrap;
 }
 
@@ -933,18 +853,18 @@ function screenCodeInput(cfg, stores){
 async function grantStamp(storeId){
   if(!state.participant){ go('top'); return; }
   if(state.participant.stamps.includes(storeId)){
-    go('scan', {codeError:'この生き物はすでに発見済みです'});
+    go('codeInput', {currentStoreId:storeId, codeError:'この生き物はすでに発見済みです'});
     return;
   }
   try{
     const { error } = await sb.from('participant_stamps').insert({participant_id: state.participant.id, store_id: storeId});
     if(error){
-      if(error.code==='23505'){ go('scan', {codeError:'この生き物はすでに発見済みです'}); return; }
+      if(error.code==='23505'){ go('codeInput', {currentStoreId:storeId, codeError:'この生き物はすでに発見済みです'}); return; }
       throw error;
     }
   }catch(e){
     console.error('grantStamp failed', e);
-    go('scan', {codeError:'通信エラーが発生しました。もう一度お試しください。'});
+    go('codeInput', {currentStoreId:storeId, codeError:'通信エラーが発生しました。もう一度お試しください。'});
     return;
   }
   state.participant.stamps.push(storeId);
