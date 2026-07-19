@@ -267,6 +267,42 @@ body.cert-zoomed .cert4-frame{
 }
 @keyframes pulse{0%,100%{transform:scale(1);}50%{transform:scale(1.03);}}
 
+/* ===== 続きから再開するための案内ボックス ===== */
+.save-guide-card{
+  background:linear-gradient(135deg,#FFF9EC,#EAFBFB);
+  border:2px solid #FFDD8A;
+  padding:14px 16px;
+}
+.save-guide-title{ font-weight:900; font-size:13px; color:var(--ink); }
+.save-guide-desc{ font-size:11.5px; color:var(--ink-soft); line-height:1.6; margin-top:4px; }
+.save-guide-accordion{ margin-top:10px; }
+.save-guide-item{ margin-bottom:6px; }
+.save-guide-btn{
+  width:100%; text-align:left; padding:9px 12px; border:none; border-radius:10px;
+  background:#fff; font-weight:700; font-size:12px; color:var(--ink); font-family:inherit;
+  cursor:pointer; display:flex; justify-content:space-between; align-items:center; box-shadow:var(--shadow);
+}
+.save-guide-btn::after{ content:'▼'; font-size:9px; color:var(--ink-soft); transition:transform .2s ease; }
+.save-guide-btn.active::after{ transform:rotate(180deg); }
+.save-guide-btn.active{ background:var(--pink); color:#fff; }
+.save-guide-btn.active::after{ color:#fff; }
+.save-guide-panel{
+  max-height:0; overflow:hidden; transition:max-height .25s ease;
+  background:#fff; border-radius:0 0 10px 10px; margin-top:-4px;
+}
+.save-guide-panel.open{ max-height:600px; padding:4px 12px 10px; }
+.save-guide-os{ font-size:11.5px; margin-top:7px; line-height:1.7; }
+.save-guide-os:first-child{ margin-top:9px; }
+.save-guide-os b{ color:var(--pink-deep); }
+.save-guide-os ol{ margin:3px 0 0 16px; padding:0; }
+.save-guide-warn{
+  margin-top:10px; font-size:10.5px; color:var(--ink-soft); line-height:1.7;
+  background:#FFF3F0; border-radius:8px; padding:8px 10px;
+}
+.contact-footer{
+  text-align:center; font-size:11px; color:var(--ink-soft); margin:18px 0 6px; line-height:1.6;
+}
+
 .store-row{display:flex;gap:12px;align-items:center;padding:12px;border-radius:14px;background:#fff;margin-bottom:10px;box-shadow:var(--shadow);cursor:pointer;}
 .store-row img{width:56px;height:56px;border-radius:12px;object-fit:cover;background:#eee;flex-shrink:0;}
 .store-row .name{font-weight:700;font-size:14.5px;}
@@ -1045,17 +1081,63 @@ async function screenCard(cfg, stores){
     ${msg ? `<div class="remain-banner ${msg.final?'final':''}"><div style="font-size:13px;font-weight:700;">${msg.overview}</div><div style="margin-top:4px;">${msg.tier}</div></div>` : ''}
     ${gotCount>=cfg.requiredStamps ? `<button class="btn btn-primary" id="toComplete" style="margin-top:14px;">達成画面を見る 🎉</button>` : ''}
   </div>
-  ${gotCount>=1 ? `
-  <div class="card" style="text-align:center;">
-    <div style="font-weight:700;">🌴 参加ありがとうございます！</div>
-  </div>` : ''}
   ${gotCount>=2 ? `<button class="btn btn-outline-blue" id="rareBtn">✨ レア生きものコレクション</button>` : ''}
+  <div class="card save-guide-card">
+    <div class="save-guide-title">📱 次の店舗でも続きから遊ぶために</div>
+    <div class="save-guide-desc">
+      同じスマートフォン・同じブラウザで次の店舗のQRコードを読み取ると、前回の続きから再開できます。<br>
+      念のため、保存しておくと安心です。
+    </div>
+    <div class="save-guide-accordion">
+      <div class="save-guide-item">
+        <button class="save-guide-btn" data-target="sg1">📱 ホーム画面に追加する方法</button>
+        <div class="save-guide-panel" id="sg1">
+          <div class="save-guide-os"><b>iPhone・Safari</b>
+            <ol><li>画面下部の「共有」ボタンを押す</li><li>「ホーム画面に追加」を選ぶ</li><li>右上の「追加」を押す</li></ol>
+          </div>
+          <div class="save-guide-os"><b>iPhone・Chrome</b>
+            <ol><li>共有ボタンを押す</li><li>「ホーム画面に追加」を選ぶ</li><li>「追加」を押す</li></ol>
+          </div>
+          <div class="save-guide-os"><b>Android・Chrome</b>
+            <ol><li>右上の「︙」を押す</li><li>「ホーム画面に追加」を選ぶ</li><li>「追加」を押す</li></ol>
+          </div>
+        </div>
+      </div>
+      <div class="save-guide-item">
+        <button class="save-guide-btn" data-target="sg2">🔖 ブックマークに保存する方法</button>
+        <div class="save-guide-panel" id="sg2">
+          <div class="save-guide-os"><b>iPhone・Safari</b>
+            <ol><li>画面下部の「共有」ボタンを押す</li><li>「ブックマークを追加」を選ぶ</li><li>「保存」を押す</li></ol>
+          </div>
+          <div class="save-guide-os"><b>iPhone・Chrome</b>
+            <ol><li>「…」を押す</li><li>「ブックマークに追加」を選ぶ</li></ol>
+          </div>
+          <div class="save-guide-os"><b>Android・Chrome</b>
+            <ol><li>右上の「︙」を押す</li><li>星マークを押して保存する</li></ol>
+          </div>
+        </div>
+      </div>
+      <div class="save-guide-item">
+        <button class="save-guide-btn" data-target="sg3">🔗 URLをコピーして保存する方法</button>
+        <div class="save-guide-panel" id="sg3">
+          <div class="save-guide-os">
+            <ol><li>ブラウザのアドレスバーを押す</li><li>表示されているURLを、最初から最後まで全部コピーする</li><li>LINEの自分宛てトーク、メモ、メールなどに貼り付けて保存する</li></ol>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="save-guide-warn">
+      ・表示されているURL全体を保存してください<br>
+      ・シークレットモードやプライベートブラウズは使わず、通常のブラウザをご利用ください
+    </div>
+  </div>
   ${await renderPrizeSection(cfg, p, gotCount)}
   <div class="card" style="text-align:center;">
     <div style="font-size:13.5px;font-weight:700;">📷 スマートフォンの標準カメラを開いて、<br>店頭のQRコードを読み取ってください</div>
     <div class="small-note" style="margin-top:6px;">iPhone・Androidどちらも、普段お使いのカメラアプリでそのまま読み取れます</div>
   </div>
   <button class="btn btn-secondary" id="listBtn">🏝️ 店舗一覧を見る</button>
+  <div class="contact-footer">ご不明な点は、0466-96-0408（Malia編集部）へお問い合わせください。</div>
   `;
   wrap.querySelector('#listBtn').onclick = ()=> go('storeList',{storeListTarget:'participant'});
   const cb = wrap.querySelector('#toComplete');
@@ -1063,6 +1145,15 @@ async function screenCard(cfg, stores){
   const rareBtn = wrap.querySelector('#rareBtn');
   if(rareBtn) rareBtn.onclick = ()=> go('rareCollection');
   wirePrizeSection(wrap, cfg);
+  wrap.querySelectorAll('.save-guide-btn').forEach(btn=>{
+    btn.onclick = ()=>{
+      const panel = wrap.querySelector('#'+btn.dataset.target);
+      const isOpen = panel.classList.contains('open');
+      wrap.querySelectorAll('.save-guide-panel').forEach(p=>p.classList.remove('open'));
+      wrap.querySelectorAll('.save-guide-btn').forEach(b=>b.classList.remove('active'));
+      if(!isOpen){ panel.classList.add('open'); btn.classList.add('active'); }
+    };
+  });
   return wrap;
 }
 
